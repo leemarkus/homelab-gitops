@@ -90,3 +90,7 @@ The workflow is Forgejo Actions and is kept under `.forgejo/`. It expects a self
 This repository is a curated public copy of a private one. Sealed secrets, host-specific probes, DNS configuration, personal workloads, operational runbooks and internal planning documents stay in the private repository. Host and VM configuration (Ansible) lives in a separate repository.
 
 Author: Mark Lee
+
+## License
+
+[MIT](LICENSE)
