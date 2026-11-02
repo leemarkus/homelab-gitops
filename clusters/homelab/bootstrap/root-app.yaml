@@ -1,0 +1,27 @@
+# App-of-apps root. Applied by hand once; it then manages every Application
+# under apps/ from Git. It tracks `deploy`, the branch CI fast-forwards only
+# after every validation job passes (docs/adr/0003-promotion-boundary.md).
+# The root app does not manage itself: changing this file needs a matching
+# `kubectl -n argocd patch app root-homelab` on the live object.
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: root-homelab
+  namespace: argocd
+spec:
+  project: default
+  source:
+    repoURL: https://git.example.com/platform/gitops.git
+    targetRevision: deploy
+    path: clusters/homelab/apps
+    directory:
+      recurse: true
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: argocd
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - ServerSideApply=true

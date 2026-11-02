@@ -1,0 +1,76 @@
+targetNamespaces: ""
+excludeNamespaces: "kube-node-lease,kube-public,cilium-secrets,trivy-system"
+
+operator:
+  scanJobsConcurrentLimit: 2
+  scanNodeCollectorLimit: 1
+  scanJobTimeout: 15m
+  scanJobTTL: "10m"
+
+  builtInTrivyServer: true
+  builtInServerRegistryInsecure: false
+
+  vulnerabilityScannerEnabled: true
+  configAuditScannerEnabled: true
+  rbacAssessmentScannerEnabled: true
+  infraAssessmentScannerEnabled: true
+  clusterComplianceEnabled: false
+  sbomGenerationEnabled: true
+  clusterSbomCacheEnabled: false
+  vulnerabilityScannerScanOnlyCurrentRevisions: true
+  configAuditScannerScanOnlyCurrentRevisions: true
+
+  metricsFindingsEnabled: true
+  metricsVulnIdEnabled: false
+  metricsExposedSecretInfo: false
+  metricsConfigAuditInfo: false
+  metricsRbacAssessmentInfo: false
+  metricsInfraAssessmentInfo: false
+  metricsImageInfo: false
+  metricsClusterComplianceInfo: false
+
+resources:
+  requests:
+    cpu: 50m
+    memory: 256Mi
+  limits:
+    memory: 1Gi
+
+priorityClassName: platform
+
+trivy:
+  image:
+    tag: 0.72.0
+  slow: true
+  ignoreUnfixed: false
+  storageClassEnabled: true
+  storageClassName: longhorn
+  storageSize: 5Gi
+  priorityClassName: platform
+  resources:
+    requests:
+      cpu: 100m
+      memory: 128Mi
+    limits:
+      memory: 512Mi
+  additionalVulnerabilityReportFields: "Description,Links,CVSS"
+  server:
+    resources:
+      requests:
+        cpu: 200m
+        memory: 512Mi
+      limits:
+        memory: 1Gi
+
+compliance:
+  specs: []
+
+nodeCollector:
+  excludeNodes: "node-role.kubernetes.io/control-plane=true"
+  useNodeSelector: true
+
+serviceMonitor:
+  enabled: true
+  labels:
+    release: kube-prometheus-stack
+  interval: 60s

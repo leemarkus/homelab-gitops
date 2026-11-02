@@ -1,0 +1,69 @@
+# AppProject `platform`: the fence for the cluster's own components. Sources
+# are pinned to this repo and the upstream chart repos in use; destinations are
+# the namespaces platform components occupy. Cluster-scoped kinds stay allowed
+# because installing CRDs and webhooks is what a platform component does. The
+# empty-namespace destination lets cluster-config (which sets no app-level
+# namespace) validate; per-resource checks still apply.
+apiVersion: argoproj.io/v1alpha1
+kind: AppProject
+metadata:
+  name: platform
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-options: Prune=false
+    argocd.argoproj.io/sync-wave: "-10"
+spec:
+  description: Cluster platform components (CNI-adjacent, ingress, storage, observability, CI infrastructure, ArgoCD-adjacent config).
+
+  sourceRepos:
+    - https://git.example.com/platform/gitops.git
+    - https://aquasecurity.github.io/helm-charts/
+    - https://charts.jetstack.io
+    - https://charts.longhorn.io
+    - https://grafana.github.io/helm-charts
+    - https://kubernetes.github.io/ingress-nginx
+    - https://kyverno.github.io/kyverno/
+    - https://prometheus-community.github.io/helm-charts
+    - https://vmware-tanzu.github.io/helm-charts
+
+  destinations:
+    - server: https://kubernetes.default.svc
+      namespace: ''
+    - server: https://kubernetes.default.svc
+      namespace: argocd
+    - server: https://kubernetes.default.svc
+      namespace: cert-manager
+    - server: https://kubernetes.default.svc
+      namespace: ci
+    - server: https://kubernetes.default.svc
+      namespace: default
+    - server: https://kubernetes.default.svc
+      namespace: forgejo-runner
+    - server: https://kubernetes.default.svc
+      namespace: ingress-nginx
+    - server: https://kubernetes.default.svc
+      namespace: kube-system
+    - server: https://kubernetes.default.svc
+      namespace: kyverno
+    - server: https://kubernetes.default.svc
+      namespace: longhorn-system
+    - server: https://kubernetes.default.svc
+      namespace: monitoring
+    - server: https://kubernetes.default.svc
+      namespace: system-upgrade
+    - server: https://kubernetes.default.svc
+      namespace: velero
+    - server: https://kubernetes.default.svc
+      namespace: trivy-system
+    - server: https://kubernetes.default.svc
+      namespace: website-dev
+    - server: https://kubernetes.default.svc
+      namespace: website-prod
+
+  clusterResourceWhitelist:
+    - group: '*'
+      kind: '*'
+
+  namespaceResourceWhitelist:
+    - group: '*'
+      kind: '*'

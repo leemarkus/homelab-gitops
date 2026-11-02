@@ -1,0 +1,61 @@
+global:
+  domain: argocd.apps.example.com
+
+configs:
+  params:
+    server.insecure: true
+
+  cm:
+    url: https://argocd.apps.example.com
+
+    oidc.config: |
+      name: Forgejo
+      issuer: https://git.example.com
+      clientID: $forgejo-oidc:clientID
+      clientSecret: $forgejo-oidc:clientSecret
+      requestedScopes:
+        - openid
+        - profile
+        - email
+        - groups
+
+  rbac:
+    create: true
+
+    scopes: '[groups]'
+
+    policy.default: role:readonly
+
+    policy.csv: |
+      p, role:platform-admin, *, *, *, allow
+      p, role:platform-admin, exec, create, */*, deny
+
+      p, role:app-developer, applications, get, apps/*, allow
+      p, role:app-developer, applications, sync, apps/*, allow
+      p, role:app-developer, logs, get, apps/*, allow
+      p, role:app-developer, projects, get, apps, allow
+      p, role:app-developer, repositories, get, *, allow
+      p, role:app-developer, applications, delete, */*, deny
+      p, role:app-developer, applications, delete/*, */*, deny
+      p, role:app-developer, applications, update/*, */*, deny
+      p, role:app-developer, applications, override, */*, deny
+      p, role:app-developer, exec, create, */*, deny
+
+      g, platform:admins, role:platform-admin
+      g, platform:developers, role:app-developer
+
+dex:
+  enabled: false
+
+server:
+  replicas: 1
+  ingress:
+    enabled: true
+    hostname: argocd.apps.example.com
+    ingressClassName: nginx
+
+repoServer:
+  replicas: 1
+
+applicationSet:
+  replicas: 1

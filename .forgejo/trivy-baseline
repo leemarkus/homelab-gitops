@@ -1,0 +1,24 @@
+# Per-image trivy baselines: the one source of truth for the image-CVE gate.
+#
+# Format: one `IMAGE-PREFIX=COUNT` per line; `#` starts a comment. COUNT is the
+# number of fixable HIGH/CRITICAL CVEs the image may carry, measured with the
+# exact flags in .forgejo/scripts/trivy-lib.sh. An image takes the value of the
+# LAST entry whose prefix matches its full reference, so put a more specific
+# prefix below a broader one.
+#
+# validate.yml's `trivy` job scans, on every PR and push, only the images whose
+# reference changed in that diff, new images, and images whose entry below
+# changed. Each must be at or below its value here; a new image with no entry
+# fails NO BASELINE. Drift on an unchanged image (upstream publishing a CVE
+# against a digest nobody touched) never blocks promotion.
+#
+# The ratchet: bump a pin and lower its value in the same change whenever the
+# bump allows. Raising a value is a deliberate, reviewed act.
+alpine=0
+busybox=0
+debian=8
+traefik/whoami=15
+docker.io/xenrox/ntfy-alertmanager=5
+velero/velero-plugin-for-aws=62
+moby/buildkit=117
+rancher/system-upgrade-controller=4

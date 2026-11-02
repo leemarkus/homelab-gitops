@@ -1,0 +1,36 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: trivy-operator
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "1"
+spec:
+  project: platform
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: trivy-system
+  sources:
+    - repoURL: https://aquasecurity.github.io/helm-charts/
+      chart: trivy-operator
+      targetRevision: 0.34.0
+      helm:
+        valueFiles:
+          - $values/clusters/homelab/values/trivy-operator-values.yaml
+    - repoURL: https://git.example.com/platform/gitops.git
+      targetRevision: deploy
+      ref: values
+  ignoreDifferences:
+    - group: apps
+      kind: StatefulSet
+      name: trivy-server
+      namespace: trivy-system
+      jqPathExpressions:
+        - .spec.volumeClaimTemplates[].spec.volumeMode | select(. == "Filesystem")
+  syncPolicy:
+    automated:
+      selfHeal: true
+      prune: false
+    syncOptions:
+      - CreateNamespace=true
+      - ServerSideApply=true

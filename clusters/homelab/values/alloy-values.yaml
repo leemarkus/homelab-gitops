@@ -1,0 +1,98 @@
+controller:
+  type: daemonset
+  priorityClassName: platform
+  tolerations:
+    - operator: Exists
+
+alloy:
+  resources:
+    requests: { cpu: 50m, memory: 128Mi }
+    limits: { memory: 256Mi }
+  configMap:
+    content: |-
+      discovery.kubernetes "pods" {
+        role = "pod"
+        selectors {
+          role  = "pod"
+          field = "spec.nodeName=" + sys.env("HOSTNAME_NODE")
+        }
+      }
+
+      discovery.relabel "pods" {
+        targets = discovery.kubernetes.pods.targets
+        rule {
+          source_labels = ["__meta_kubernetes_namespace"]
+          target_label  = "namespace"
+        }
+        rule {
+          source_labels = ["__meta_kubernetes_pod_name"]
+          target_label  = "pod"
+        }
+        rule {
+          source_labels = ["__meta_kubernetes_pod_container_name"]
+          target_label  = "container"
+        }
+        rule {
+          source_labels = ["__meta_kubernetes_pod_node_name"]
+          target_label  = "node"
+        }
+        rule {
+          source_labels = ["__meta_kubernetes_pod_label_app_kubernetes_io_name"]
+          target_label  = "app"
+        }
+      }
+
+      loki.source.kubernetes "pods" {
+        targets    = discovery.relabel.pods.output
+        forward_to = [loki.process.io_errors.receiver]
+      }
+
+      // Storage-corruption detection.
+      // The failure signature is a pod Running and Ready, Longhorn reporting
+      // robustness=healthy, and every write failing. The workload's own log
+      // line is the only honest signal available, so count
+      // it here at collection time and export a counter for Prometheus.
+      //
+      // Deliberately exported as a metric rather than implemented as a Loki
+      // ruler alert: this path keeps working when Loki is the component whose
+      // storage is broken, and keeps all alerting in one place (Prometheus).
+      //
+      // Cardinality is bounded because stage.match only admits matching streams
+      // into the sub-pipeline — pods that never log an I/O error create no series.
+      loki.process "io_errors" {
+        forward_to = [loki.write.default.receiver]
+
+        stage.match {
+          selector = "{namespace=~\".+\"} |~ \"(?i)input/output error\""
+
+          stage.metrics {
+            metric.counter {
+              name        = "pod_log_io_errors"
+              description = "Log lines containing 'input/output error', by source pod"
+              action      = "inc"
+              match_all   = true
+              // Explicit, because the PodLogIOErrors alert is presence-based:
+              // the series' lifetime IS the alert's resolve time. Ten minutes
+              // after a pod stops logging I/O errors, the series is dropped and
+              // the alert clears on its own.
+              max_idle_duration = "10m"
+            }
+          }
+        }
+      }
+
+      loki.write "default" {
+        endpoint {
+          url = "http://loki.monitoring.svc.cluster.local:3100/loki/api/v1/push"
+        }
+      }
+  extraEnv:
+    - name: HOSTNAME_NODE
+      valueFrom:
+        fieldRef:
+          fieldPath: spec.nodeName
+
+serviceMonitor:
+  enabled: true
+  additionalLabels:
+    release: kube-prometheus-stack

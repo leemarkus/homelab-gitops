@@ -1,0 +1,1401 @@
+{
+  "rule_files": [
+    "production-rules.yaml"
+  ],
+  "evaluation_interval": "30s",
+  "fuzzy_compare": true,
+  "tests": [
+    {
+      "name": "dev exported: healthy tenant ignores foreign errors",
+      "interval": "1m",
+      "input_series": [
+        {
+          "series": "nginx_ingress_controller_requests{namespace=\"ingress-nginx\",exported_namespace=\"website-dev\",ingress=\"website\",status=\"200\"}",
+          "values": "0+100x20"
+        },
+        {
+          "series": "nginx_ingress_controller_request_duration_seconds_count{namespace=\"ingress-nginx\",exported_namespace=\"website-dev\",ingress=\"website\"}",
+          "values": "0+100x20"
+        },
+        {
+          "series": "nginx_ingress_controller_request_duration_seconds_bucket{namespace=\"ingress-nginx\",exported_namespace=\"website-dev\",ingress=\"website\",le=\"0.5\"}",
+          "values": "0+100x20"
+        },
+        {
+          "series": "nginx_ingress_controller_requests{namespace=\"website-dev\",exported_namespace=\"foreign-dev\",ingress=\"website\",status=\"500\"}",
+          "values": "0+10000x20"
+        },
+        {
+          "series": "nginx_ingress_controller_requests{namespace=\"ingress-nginx\",exported_namespace=\"website-dev\",ingress=\"foreign\",status=\"500\"}",
+          "values": "0+10000x20"
+        }
+      ],
+      "promql_expr_test": [
+        {
+          "expr": "gp:slo_error_ratio:rate5m{tenant=\"website\",env=\"dev\",slo=\"availability\"}",
+          "eval_time": "20m",
+          "exp_samples": [
+            {
+              "labels": "gp:slo_error_ratio:rate5m{tenant=\"website\",env=\"dev\",namespace=\"website-dev\",slo=\"availability\"}",
+              "value": 0
+            }
+          ]
+        },
+        {
+          "expr": "gp:slo_error_ratio:rate30m{tenant=\"website\",env=\"dev\",slo=\"availability\"}",
+          "eval_time": "20m",
+          "exp_samples": [
+            {
+              "labels": "gp:slo_error_ratio:rate30m{tenant=\"website\",env=\"dev\",namespace=\"website-dev\",slo=\"availability\"}",
+              "value": 0
+            }
+          ]
+        },
+        {
+          "expr": "gp:slo_error_ratio:rate1h{tenant=\"website\",env=\"dev\",slo=\"availability\"}",
+          "eval_time": "20m",
+          "exp_samples": [
+            {
+              "labels": "gp:slo_error_ratio:rate1h{tenant=\"website\",env=\"dev\",namespace=\"website-dev\",slo=\"availability\"}",
+              "value": 0
+            }
+          ]
+        },
+        {
+          "expr": "gp:slo_error_ratio:rate2h{tenant=\"website\",env=\"dev\",slo=\"availability\"}",
+          "eval_time": "20m",
+          "exp_samples": [
+            {
+              "labels": "gp:slo_error_ratio:rate2h{tenant=\"website\",env=\"dev\",namespace=\"website-dev\",slo=\"availability\"}",
+              "value": 0
+            }
+          ]
+        },
+        {
+          "expr": "gp:slo_error_ratio:rate6h{tenant=\"website\",env=\"dev\",slo=\"availability\"}",
+          "eval_time": "20m",
+          "exp_samples": [
+            {
+              "labels": "gp:slo_error_ratio:rate6h{tenant=\"website\",env=\"dev\",namespace=\"website-dev\",slo=\"availability\"}",
+              "value": 0
+            }
+          ]
+        },
+        {
+          "expr": "gp:slo_error_ratio:rate1d{tenant=\"website\",env=\"dev\",slo=\"availability\"}",
+          "eval_time": "20m",
+          "exp_samples": [
+            {
+              "labels": "gp:slo_error_ratio:rate1d{tenant=\"website\",env=\"dev\",namespace=\"website-dev\",slo=\"availability\"}",
+              "value": 0
+            }
+          ]
+        },
+        {
+          "expr": "gp:slo_error_ratio:rate3d{tenant=\"website\",env=\"dev\",slo=\"availability\"}",
+          "eval_time": "20m",
+          "exp_samples": [
+            {
+              "labels": "gp:slo_error_ratio:rate3d{tenant=\"website\",env=\"dev\",namespace=\"website-dev\",slo=\"availability\"}",
+              "value": 0
+            }
+          ]
+        },
+        {
+          "expr": "gp:slo_error_ratio:rate5m{tenant=\"website\",env=\"dev\",slo=\"latency\"}",
+          "eval_time": "20m",
+          "exp_samples": [
+            {
+              "labels": "gp:slo_error_ratio:rate5m{tenant=\"website\",env=\"dev\",namespace=\"website-dev\",slo=\"latency\"}",
+              "value": 0
+            }
+          ]
+        },
+        {
+          "expr": "gp:slo_error_ratio:rate30m{tenant=\"website\",env=\"dev\",slo=\"latency\"}",
+          "eval_time": "20m",
+          "exp_samples": [
+            {
+              "labels": "gp:slo_error_ratio:rate30m{tenant=\"website\",env=\"dev\",namespace=\"website-dev\",slo=\"latency\"}",
+              "value": 0
+            }
+          ]
+        },
+        {
+          "expr": "gp:slo_error_ratio:rate1h{tenant=\"website\",env=\"dev\",slo=\"latency\"}",
+          "eval_time": "20m",
+          "exp_samples": [
+            {
+              "labels": "gp:slo_error_ratio:rate1h{tenant=\"website\",env=\"dev\",namespace=\"website-dev\",slo=\"latency\"}",
+              "value": 0
+            }
+          ]
+        },
+        {
+          "expr": "gp:slo_error_ratio:rate2h{tenant=\"website\",env=\"dev\",slo=\"latency\"}",
+          "eval_time": "20m",
+          "exp_samples": [
+            {
+              "labels": "gp:slo_error_ratio:rate2h{tenant=\"website\",env=\"dev\",namespace=\"website-dev\",slo=\"latency\"}",
+              "value": 0
+            }
+          ]
+        },
+        {
+          "expr": "gp:slo_error_ratio:rate6h{tenant=\"website\",env=\"dev\",slo=\"latency\"}",
+          "eval_time": "20m",
+          "exp_samples": [
+            {
+              "labels": "gp:slo_error_ratio:rate6h{tenant=\"website\",env=\"dev\",namespace=\"website-dev\",slo=\"latency\"}",
+              "value": 0
+            }
+          ]
+        },
+        {
+          "expr": "gp:slo_error_ratio:rate1d{tenant=\"website\",env=\"dev\",slo=\"latency\"}",
+          "eval_time": "20m",
+          "exp_samples": [
+            {
+              "labels": "gp:slo_error_ratio:rate1d{tenant=\"website\",env=\"dev\",namespace=\"website-dev\",slo=\"latency\"}",
+              "value": 0
+            }
+          ]
+        },
+        {
+          "expr": "gp:slo_error_ratio:rate3d{tenant=\"website\",env=\"dev\",slo=\"latency\"}",
+          "eval_time": "20m",
+          "exp_samples": [
+            {
+              "labels": "gp:slo_error_ratio:rate3d{tenant=\"website\",env=\"dev\",namespace=\"website-dev\",slo=\"latency\"}",
+              "value": 0
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "dev native: healthy tenant ignores foreign errors",
+      "interval": "1m",
+      "input_series": [
+        {
+          "series": "nginx_ingress_controller_requests{namespace=\"website-dev\",ingress=\"website\",status=\"200\"}",
+          "values": "0+100x20"
+        },
+        {
+          "series": "nginx_ingress_controller_request_duration_seconds_count{namespace=\"website-dev\",ingress=\"website\"}",
+          "values": "0+100x20"
+        },
+        {
+          "series": "nginx_ingress_controller_request_duration_seconds_bucket{namespace=\"website-dev\",ingress=\"website\",le=\"0.5\"}",
+          "values": "0+100x20"
+        },
+        {
+          "series": "nginx_ingress_controller_requests{namespace=\"website-dev\",exported_namespace=\"foreign-dev\",ingress=\"website\",status=\"500\"}",
+          "values": "0+10000x20"
+        },
+        {
+          "series": "nginx_ingress_controller_requests{namespace=\"ingress-nginx\",exported_namespace=\"website-dev\",ingress=\"foreign\",status=\"500\"}",
+          "values": "0+10000x20"
+        }
+      ],
+      "promql_expr_test": [
+        {
+          "expr": "gp:slo_error_ratio:rate5m{tenant=\"website\",env=\"dev\",slo=\"availability\"}",
+          "eval_time": "20m",
+          "exp_samples": [
+            {
+              "labels": "gp:slo_error_ratio:rate5m{tenant=\"website\",env=\"dev\",namespace=\"website-dev\",slo=\"availability\"}",
+              "value": 0
+            }
+          ]
+        },
+        {
+          "expr": "gp:slo_error_ratio:rate30m{tenant=\"website\",env=\"dev\",slo=\"availability\"}",
+          "eval_time": "20m",
+          "exp_samples": [
+            {
+              "labels": "gp:slo_error_ratio:rate30m{tenant=\"website\",env=\"dev\",namespace=\"website-dev\",slo=\"availability\"}",
+              "value": 0
+            }
+          ]
+        },
+        {
+          "expr": "gp:slo_error_ratio:rate1h{tenant=\"website\",env=\"dev\",slo=\"availability\"}",
+          "eval_time": "20m",
+          "exp_samples": [
+            {
+              "labels": "gp:slo_error_ratio:rate1h{tenant=\"website\",env=\"dev\",namespace=\"website-dev\",slo=\"availability\"}",
+              "value": 0
+            }
+          ]
+        },
+        {
+          "expr": "gp:slo_error_ratio:rate2h{tenant=\"website\",env=\"dev\",slo=\"availability\"}",
+          "eval_time": "20m",
+          "exp_samples": [
+            {
+              "labels": "gp:slo_error_ratio:rate2h{tenant=\"website\",env=\"dev\",namespace=\"website-dev\",slo=\"availability\"}",
+              "value": 0
+            }
+          ]
+        },
+        {
+          "expr": "gp:slo_error_ratio:rate6h{tenant=\"website\",env=\"dev\",slo=\"availability\"}",
+          "eval_time": "20m",
+          "exp_samples": [
+            {
+              "labels": "gp:slo_error_ratio:rate6h{tenant=\"website\",env=\"dev\",namespace=\"website-dev\",slo=\"availability\"}",
+              "value": 0
+            }
+          ]
+        },
+        {
+          "expr": "gp:slo_error_ratio:rate1d{tenant=\"website\",env=\"dev\",slo=\"availability\"}",
+          "eval_time": "20m",
+          "exp_samples": [
+            {
+              "labels": "gp:slo_error_ratio:rate1d{tenant=\"website\",env=\"dev\",namespace=\"website-dev\",slo=\"availability\"}",
+              "value": 0
+            }
+          ]
+        },
+        {
+          "expr": "gp:slo_error_ratio:rate3d{tenant=\"website\",env=\"dev\",slo=\"availability\"}",
+          "eval_time": "20m",
+          "exp_samples": [
+            {
+              "labels": "gp:slo_error_ratio:rate3d{tenant=\"website\",env=\"dev\",namespace=\"website-dev\",slo=\"availability\"}",
+              "value": 0
+            }
+          ]
+        },
+        {
+          "expr": "gp:slo_error_ratio:rate5m{tenant=\"website\",env=\"dev\",slo=\"latency\"}",
+          "eval_time": "20m",
+          "exp_samples": [
+            {
+              "labels": "gp:slo_error_ratio:rate5m{tenant=\"website\",env=\"dev\",namespace=\"website-dev\",slo=\"latency\"}",
+              "value": 0
+            }
+          ]
+        },
+        {
+          "expr": "gp:slo_error_ratio:rate30m{tenant=\"website\",env=\"dev\",slo=\"latency\"}",
+          "eval_time": "20m",
+          "exp_samples": [
+            {
+              "labels": "gp:slo_error_ratio:rate30m{tenant=\"website\",env=\"dev\",namespace=\"website-dev\",slo=\"latency\"}",
+              "value": 0
+            }
+          ]
+        },
+        {
+          "expr": "gp:slo_error_ratio:rate1h{tenant=\"website\",env=\"dev\",slo=\"latency\"}",
+          "eval_time": "20m",
+          "exp_samples": [
+            {
+              "labels": "gp:slo_error_ratio:rate1h{tenant=\"website\",env=\"dev\",namespace=\"website-dev\",slo=\"latency\"}",
+              "value": 0
+            }
+          ]
+        },
+        {
+          "expr": "gp:slo_error_ratio:rate2h{tenant=\"website\",env=\"dev\",slo=\"latency\"}",
+          "eval_time": "20m",
+          "exp_samples": [
+            {
+              "labels": "gp:slo_error_ratio:rate2h{tenant=\"website\",env=\"dev\",namespace=\"website-dev\",slo=\"latency\"}",
+              "value": 0
+            }
+          ]
+        },
+        {
+          "expr": "gp:slo_error_ratio:rate6h{tenant=\"website\",env=\"dev\",slo=\"latency\"}",
+          "eval_time": "20m",
+          "exp_samples": [
+            {
+              "labels": "gp:slo_error_ratio:rate6h{tenant=\"website\",env=\"dev\",namespace=\"website-dev\",slo=\"latency\"}",
+              "value": 0
+            }
+          ]
+        },
+        {
+          "expr": "gp:slo_error_ratio:rate1d{tenant=\"website\",env=\"dev\",slo=\"latency\"}",
+          "eval_time": "20m",
+          "exp_samples": [
+            {
+              "labels": "gp:slo_error_ratio:rate1d{tenant=\"website\",env=\"dev\",namespace=\"website-dev\",slo=\"latency\"}",
+              "value": 0
+            }
+          ]
+        },
+        {
+          "expr": "gp:slo_error_ratio:rate3d{tenant=\"website\",env=\"dev\",slo=\"latency\"}",
+          "eval_time": "20m",
+          "exp_samples": [
+            {
+              "labels": "gp:slo_error_ratio:rate3d{tenant=\"website\",env=\"dev\",namespace=\"website-dev\",slo=\"latency\"}",
+              "value": 0
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "dev: idle counters produce no ratio",
+      "interval": "1m",
+      "input_series": [
+        {
+          "series": "nginx_ingress_controller_requests{namespace=\"ingress-nginx\",exported_namespace=\"website-dev\",ingress=\"website\"}",
+          "values": "0+0x20"
+        },
+        {
+          "series": "nginx_ingress_controller_request_duration_seconds_count{namespace=\"ingress-nginx\",exported_namespace=\"website-dev\",ingress=\"website\"}",
+          "values": "0+0x20"
+        },
+        {
+          "series": "nginx_ingress_controller_request_duration_seconds_bucket{namespace=\"ingress-nginx\",exported_namespace=\"website-dev\",ingress=\"website\",le=\"0.5\"}",
+          "values": "0+0x20"
+        }
+      ],
+      "promql_expr_test": [
+        {
+          "expr": "gp:slo_error_ratio:rate5m{tenant=\"website\",env=\"dev\",slo=\"availability\"}",
+          "eval_time": "20m",
+          "exp_samples": []
+        },
+        {
+          "expr": "gp:slo_error_ratio:rate30m{tenant=\"website\",env=\"dev\",slo=\"availability\"}",
+          "eval_time": "20m",
+          "exp_samples": []
+        },
+        {
+          "expr": "gp:slo_error_ratio:rate1h{tenant=\"website\",env=\"dev\",slo=\"availability\"}",
+          "eval_time": "20m",
+          "exp_samples": []
+        },
+        {
+          "expr": "gp:slo_error_ratio:rate2h{tenant=\"website\",env=\"dev\",slo=\"availability\"}",
+          "eval_time": "20m",
+          "exp_samples": []
+        },
+        {
+          "expr": "gp:slo_error_ratio:rate6h{tenant=\"website\",env=\"dev\",slo=\"availability\"}",
+          "eval_time": "20m",
+          "exp_samples": []
+        },
+        {
+          "expr": "gp:slo_error_ratio:rate1d{tenant=\"website\",env=\"dev\",slo=\"availability\"}",
+          "eval_time": "20m",
+          "exp_samples": []
+        },
+        {
+          "expr": "gp:slo_error_ratio:rate3d{tenant=\"website\",env=\"dev\",slo=\"availability\"}",
+          "eval_time": "20m",
+          "exp_samples": []
+        },
+        {
+          "expr": "gp:slo_error_ratio:rate5m{tenant=\"website\",env=\"dev\",slo=\"latency\"}",
+          "eval_time": "20m",
+          "exp_samples": []
+        },
+        {
+          "expr": "gp:slo_error_ratio:rate30m{tenant=\"website\",env=\"dev\",slo=\"latency\"}",
+          "eval_time": "20m",
+          "exp_samples": []
+        },
+        {
+          "expr": "gp:slo_error_ratio:rate1h{tenant=\"website\",env=\"dev\",slo=\"latency\"}",
+          "eval_time": "20m",
+          "exp_samples": []
+        },
+        {
+          "expr": "gp:slo_error_ratio:rate2h{tenant=\"website\",env=\"dev\",slo=\"latency\"}",
+          "eval_time": "20m",
+          "exp_samples": []
+        },
+        {
+          "expr": "gp:slo_error_ratio:rate6h{tenant=\"website\",env=\"dev\",slo=\"latency\"}",
+          "eval_time": "20m",
+          "exp_samples": []
+        },
+        {
+          "expr": "gp:slo_error_ratio:rate1d{tenant=\"website\",env=\"dev\",slo=\"latency\"}",
+          "eval_time": "20m",
+          "exp_samples": []
+        },
+        {
+          "expr": "gp:slo_error_ratio:rate3d{tenant=\"website\",env=\"dev\",slo=\"latency\"}",
+          "eval_time": "20m",
+          "exp_samples": []
+        }
+      ]
+    },
+    {
+      "name": "dev: measured failures and counter reset activate availability while latency stays gated",
+      "interval": "1m",
+      "input_series": [
+        {
+          "series": "nginx_ingress_controller_requests{namespace=\"ingress-nginx\",exported_namespace=\"website-dev\",ingress=\"website\",status=\"200\"}",
+          "values": "0+80x10 0+80x9"
+        },
+        {
+          "series": "nginx_ingress_controller_requests{namespace=\"ingress-nginx\",exported_namespace=\"website-dev\",ingress=\"website\",status=\"503\"}",
+          "values": "0+20x10 0+20x9"
+        },
+        {
+          "series": "nginx_ingress_controller_request_duration_seconds_count{namespace=\"ingress-nginx\",exported_namespace=\"website-dev\",ingress=\"website\"}",
+          "values": "0+100x10 0+100x9"
+        },
+        {
+          "series": "nginx_ingress_controller_request_duration_seconds_bucket{namespace=\"ingress-nginx\",exported_namespace=\"website-dev\",ingress=\"website\",le=\"0.5\"}",
+          "values": "0+80x10 0+80x9"
+        }
+      ],
+      "promql_expr_test": [
+        {
+          "expr": "gp:slo_error_ratio:rate5m{tenant=\"website\",env=\"dev\",slo=\"availability\"}",
+          "eval_time": "20m",
+          "exp_samples": [
+            {
+              "labels": "gp:slo_error_ratio:rate5m{tenant=\"website\",env=\"dev\",namespace=\"website-dev\",slo=\"availability\"}",
+              "value": 0.2
+            }
+          ]
+        },
+        {
+          "expr": "gp:slo_error_ratio:rate30m{tenant=\"website\",env=\"dev\",slo=\"availability\"}",
+          "eval_time": "20m",
+          "exp_samples": [
+            {
+              "labels": "gp:slo_error_ratio:rate30m{tenant=\"website\",env=\"dev\",namespace=\"website-dev\",slo=\"availability\"}",
+              "value": 0.2
+            }
+          ]
+        },
+        {
+          "expr": "gp:slo_error_ratio:rate1h{tenant=\"website\",env=\"dev\",slo=\"availability\"}",
+          "eval_time": "20m",
+          "exp_samples": [
+            {
+              "labels": "gp:slo_error_ratio:rate1h{tenant=\"website\",env=\"dev\",namespace=\"website-dev\",slo=\"availability\"}",
+              "value": 0.2
+            }
+          ]
+        },
+        {
+          "expr": "gp:slo_error_ratio:rate2h{tenant=\"website\",env=\"dev\",slo=\"availability\"}",
+          "eval_time": "20m",
+          "exp_samples": [
+            {
+              "labels": "gp:slo_error_ratio:rate2h{tenant=\"website\",env=\"dev\",namespace=\"website-dev\",slo=\"availability\"}",
+              "value": 0.2
+            }
+          ]
+        },
+        {
+          "expr": "gp:slo_error_ratio:rate6h{tenant=\"website\",env=\"dev\",slo=\"availability\"}",
+          "eval_time": "20m",
+          "exp_samples": [
+            {
+              "labels": "gp:slo_error_ratio:rate6h{tenant=\"website\",env=\"dev\",namespace=\"website-dev\",slo=\"availability\"}",
+              "value": 0.2
+            }
+          ]
+        },
+        {
+          "expr": "gp:slo_error_ratio:rate1d{tenant=\"website\",env=\"dev\",slo=\"availability\"}",
+          "eval_time": "20m",
+          "exp_samples": [
+            {
+              "labels": "gp:slo_error_ratio:rate1d{tenant=\"website\",env=\"dev\",namespace=\"website-dev\",slo=\"availability\"}",
+              "value": 0.2
+            }
+          ]
+        },
+        {
+          "expr": "gp:slo_error_ratio:rate3d{tenant=\"website\",env=\"dev\",slo=\"availability\"}",
+          "eval_time": "20m",
+          "exp_samples": [
+            {
+              "labels": "gp:slo_error_ratio:rate3d{tenant=\"website\",env=\"dev\",namespace=\"website-dev\",slo=\"availability\"}",
+              "value": 0.2
+            }
+          ]
+        },
+        {
+          "expr": "gp:slo_error_ratio:rate5m{tenant=\"website\",env=\"dev\",slo=\"latency\"}",
+          "eval_time": "20m",
+          "exp_samples": [
+            {
+              "labels": "gp:slo_error_ratio:rate5m{tenant=\"website\",env=\"dev\",namespace=\"website-dev\",slo=\"latency\"}",
+              "value": 0.2
+            }
+          ]
+        },
+        {
+          "expr": "gp:slo_error_ratio:rate30m{tenant=\"website\",env=\"dev\",slo=\"latency\"}",
+          "eval_time": "20m",
+          "exp_samples": [
+            {
+              "labels": "gp:slo_error_ratio:rate30m{tenant=\"website\",env=\"dev\",namespace=\"website-dev\",slo=\"latency\"}",
+              "value": 0.2
+            }
+          ]
+        },
+        {
+          "expr": "gp:slo_error_ratio:rate1h{tenant=\"website\",env=\"dev\",slo=\"latency\"}",
+          "eval_time": "20m",
+          "exp_samples": [
+            {
+              "labels": "gp:slo_error_ratio:rate1h{tenant=\"website\",env=\"dev\",namespace=\"website-dev\",slo=\"latency\"}",
+              "value": 0.2
+            }
+          ]
+        },
+        {
+          "expr": "gp:slo_error_ratio:rate2h{tenant=\"website\",env=\"dev\",slo=\"latency\"}",
+          "eval_time": "20m",
+          "exp_samples": [
+            {
+              "labels": "gp:slo_error_ratio:rate2h{tenant=\"website\",env=\"dev\",namespace=\"website-dev\",slo=\"latency\"}",
+              "value": 0.2
+            }
+          ]
+        },
+        {
+          "expr": "gp:slo_error_ratio:rate6h{tenant=\"website\",env=\"dev\",slo=\"latency\"}",
+          "eval_time": "20m",
+          "exp_samples": [
+            {
+              "labels": "gp:slo_error_ratio:rate6h{tenant=\"website\",env=\"dev\",namespace=\"website-dev\",slo=\"latency\"}",
+              "value": 0.2
+            }
+          ]
+        },
+        {
+          "expr": "gp:slo_error_ratio:rate1d{tenant=\"website\",env=\"dev\",slo=\"latency\"}",
+          "eval_time": "20m",
+          "exp_samples": [
+            {
+              "labels": "gp:slo_error_ratio:rate1d{tenant=\"website\",env=\"dev\",namespace=\"website-dev\",slo=\"latency\"}",
+              "value": 0.2
+            }
+          ]
+        },
+        {
+          "expr": "gp:slo_error_ratio:rate3d{tenant=\"website\",env=\"dev\",slo=\"latency\"}",
+          "eval_time": "20m",
+          "exp_samples": [
+            {
+              "labels": "gp:slo_error_ratio:rate3d{tenant=\"website\",env=\"dev\",namespace=\"website-dev\",slo=\"latency\"}",
+              "value": 0.2
+            }
+          ]
+        }
+      ],
+      "alert_rule_test": [
+        {
+          "eval_time": "20m",
+          "alertname": "GoldenPathAvailabilityFastBurn",
+          "exp_alerts": [
+            {
+              "exp_labels": {
+                "tenant": "website",
+                "env": "dev",
+                "namespace": "website-dev",
+                "slo": "availability",
+                "severity": "critical"
+              },
+              "exp_annotations": {
+                "summary": "website-dev availability error budget fast burn",
+                "description": "Measured ingress 5xx fraction exceeds paired 14.4x (5m AND 1h) OR 6x (30m AND 6h) burn thresholds against the nominal 30-day objective 0.995. Critical routes to page. Low volume is a prior, not a fitted target; absent or zero traffic is not success. Check telemetry diagnostics.",
+                "runbook_url": "https://github.com/leemarkus/k8s-golden-path/blob/main/docs/runbooks/slo-burn.md",
+                "activation": "ENABLED: repository runbook body published by the runbook stage; live activation verifies live discovery/routing and runbooks use the golden-path repository main-branch URL."
+              }
+            }
+          ]
+        },
+        {
+          "eval_time": "20m",
+          "alertname": "GoldenPathAvailabilitySlowBurn",
+          "exp_alerts": [
+            {
+              "exp_labels": {
+                "tenant": "website",
+                "env": "dev",
+                "namespace": "website-dev",
+                "slo": "availability",
+                "severity": "warning"
+              },
+              "exp_annotations": {
+                "summary": "website-dev availability error budget slow burn",
+                "description": "Measured ingress 5xx fraction exceeds paired 3x (2h AND 1d) OR 1x (6h AND 3d) burn thresholds against the nominal 30-day objective 0.995. Warning appears on the hourly status board. Low volume is a prior, not a fitted target; absent or zero traffic is not success. Check telemetry diagnostics.",
+                "runbook_url": "https://github.com/leemarkus/k8s-golden-path/blob/main/docs/runbooks/slo-burn.md",
+                "activation": "ENABLED: repository runbook body published by the runbook stage; live activation verifies live discovery/routing and runbooks use the golden-path repository main-branch URL."
+              }
+            }
+          ]
+        },
+        {
+          "eval_time": "20m",
+          "alertname": "GoldenPathLatencyFastBurn",
+          "exp_alerts": []
+        },
+        {
+          "eval_time": "20m",
+          "alertname": "GoldenPathLatencySlowBurn",
+          "exp_alerts": []
+        }
+      ]
+    },
+    {
+      "name": "prod exported: healthy tenant ignores foreign errors",
+      "interval": "1m",
+      "input_series": [
+        {
+          "series": "nginx_ingress_controller_requests{namespace=\"ingress-nginx\",exported_namespace=\"website-prod\",ingress=\"website\",status=\"200\"}",
+          "values": "0+100x20"
+        },
+        {
+          "series": "nginx_ingress_controller_request_duration_seconds_count{namespace=\"ingress-nginx\",exported_namespace=\"website-prod\",ingress=\"website\"}",
+          "values": "0+100x20"
+        },
+        {
+          "series": "nginx_ingress_controller_request_duration_seconds_bucket{namespace=\"ingress-nginx\",exported_namespace=\"website-prod\",ingress=\"website\",le=\"0.5\"}",
+          "values": "0+100x20"
+        },
+        {
+          "series": "nginx_ingress_controller_requests{namespace=\"website-prod\",exported_namespace=\"foreign-prod\",ingress=\"website\",status=\"500\"}",
+          "values": "0+10000x20"
+        },
+        {
+          "series": "nginx_ingress_controller_requests{namespace=\"ingress-nginx\",exported_namespace=\"website-prod\",ingress=\"foreign\",status=\"500\"}",
+          "values": "0+10000x20"
+        }
+      ],
+      "promql_expr_test": [
+        {
+          "expr": "gp:slo_error_ratio:rate5m{tenant=\"website\",env=\"prod\",slo=\"availability\"}",
+          "eval_time": "20m",
+          "exp_samples": [
+            {
+              "labels": "gp:slo_error_ratio:rate5m{tenant=\"website\",env=\"prod\",namespace=\"website-prod\",slo=\"availability\"}",
+              "value": 0
+            }
+          ]
+        },
+        {
+          "expr": "gp:slo_error_ratio:rate30m{tenant=\"website\",env=\"prod\",slo=\"availability\"}",
+          "eval_time": "20m",
+          "exp_samples": [
+            {
+              "labels": "gp:slo_error_ratio:rate30m{tenant=\"website\",env=\"prod\",namespace=\"website-prod\",slo=\"availability\"}",
+              "value": 0
+            }
+          ]
+        },
+        {
+          "expr": "gp:slo_error_ratio:rate1h{tenant=\"website\",env=\"prod\",slo=\"availability\"}",
+          "eval_time": "20m",
+          "exp_samples": [
+            {
+              "labels": "gp:slo_error_ratio:rate1h{tenant=\"website\",env=\"prod\",namespace=\"website-prod\",slo=\"availability\"}",
+              "value": 0
+            }
+          ]
+        },
+        {
+          "expr": "gp:slo_error_ratio:rate2h{tenant=\"website\",env=\"prod\",slo=\"availability\"}",
+          "eval_time": "20m",
+          "exp_samples": [
+            {
+              "labels": "gp:slo_error_ratio:rate2h{tenant=\"website\",env=\"prod\",namespace=\"website-prod\",slo=\"availability\"}",
+              "value": 0
+            }
+          ]
+        },
+        {
+          "expr": "gp:slo_error_ratio:rate6h{tenant=\"website\",env=\"prod\",slo=\"availability\"}",
+          "eval_time": "20m",
+          "exp_samples": [
+            {
+              "labels": "gp:slo_error_ratio:rate6h{tenant=\"website\",env=\"prod\",namespace=\"website-prod\",slo=\"availability\"}",
+              "value": 0
+            }
+          ]
+        },
+        {
+          "expr": "gp:slo_error_ratio:rate1d{tenant=\"website\",env=\"prod\",slo=\"availability\"}",
+          "eval_time": "20m",
+          "exp_samples": [
+            {
+              "labels": "gp:slo_error_ratio:rate1d{tenant=\"website\",env=\"prod\",namespace=\"website-prod\",slo=\"availability\"}",
+              "value": 0
+            }
+          ]
+        },
+        {
+          "expr": "gp:slo_error_ratio:rate3d{tenant=\"website\",env=\"prod\",slo=\"availability\"}",
+          "eval_time": "20m",
+          "exp_samples": [
+            {
+              "labels": "gp:slo_error_ratio:rate3d{tenant=\"website\",env=\"prod\",namespace=\"website-prod\",slo=\"availability\"}",
+              "value": 0
+            }
+          ]
+        },
+        {
+          "expr": "gp:slo_error_ratio:rate5m{tenant=\"website\",env=\"prod\",slo=\"latency\"}",
+          "eval_time": "20m",
+          "exp_samples": [
+            {
+              "labels": "gp:slo_error_ratio:rate5m{tenant=\"website\",env=\"prod\",namespace=\"website-prod\",slo=\"latency\"}",
+              "value": 0
+            }
+          ]
+        },
+        {
+          "expr": "gp:slo_error_ratio:rate30m{tenant=\"website\",env=\"prod\",slo=\"latency\"}",
+          "eval_time": "20m",
+          "exp_samples": [
+            {
+              "labels": "gp:slo_error_ratio:rate30m{tenant=\"website\",env=\"prod\",namespace=\"website-prod\",slo=\"latency\"}",
+              "value": 0
+            }
+          ]
+        },
+        {
+          "expr": "gp:slo_error_ratio:rate1h{tenant=\"website\",env=\"prod\",slo=\"latency\"}",
+          "eval_time": "20m",
+          "exp_samples": [
+            {
+              "labels": "gp:slo_error_ratio:rate1h{tenant=\"website\",env=\"prod\",namespace=\"website-prod\",slo=\"latency\"}",
+              "value": 0
+            }
+          ]
+        },
+        {
+          "expr": "gp:slo_error_ratio:rate2h{tenant=\"website\",env=\"prod\",slo=\"latency\"}",
+          "eval_time": "20m",
+          "exp_samples": [
+            {
+              "labels": "gp:slo_error_ratio:rate2h{tenant=\"website\",env=\"prod\",namespace=\"website-prod\",slo=\"latency\"}",
+              "value": 0
+            }
+          ]
+        },
+        {
+          "expr": "gp:slo_error_ratio:rate6h{tenant=\"website\",env=\"prod\",slo=\"latency\"}",
+          "eval_time": "20m",
+          "exp_samples": [
+            {
+              "labels": "gp:slo_error_ratio:rate6h{tenant=\"website\",env=\"prod\",namespace=\"website-prod\",slo=\"latency\"}",
+              "value": 0
+            }
+          ]
+        },
+        {
+          "expr": "gp:slo_error_ratio:rate1d{tenant=\"website\",env=\"prod\",slo=\"latency\"}",
+          "eval_time": "20m",
+          "exp_samples": [
+            {
+              "labels": "gp:slo_error_ratio:rate1d{tenant=\"website\",env=\"prod\",namespace=\"website-prod\",slo=\"latency\"}",
+              "value": 0
+            }
+          ]
+        },
+        {
+          "expr": "gp:slo_error_ratio:rate3d{tenant=\"website\",env=\"prod\",slo=\"latency\"}",
+          "eval_time": "20m",
+          "exp_samples": [
+            {
+              "labels": "gp:slo_error_ratio:rate3d{tenant=\"website\",env=\"prod\",namespace=\"website-prod\",slo=\"latency\"}",
+              "value": 0
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "prod native: healthy tenant ignores foreign errors",
+      "interval": "1m",
+      "input_series": [
+        {
+          "series": "nginx_ingress_controller_requests{namespace=\"website-prod\",ingress=\"website\",status=\"200\"}",
+          "values": "0+100x20"
+        },
+        {
+          "series": "nginx_ingress_controller_request_duration_seconds_count{namespace=\"website-prod\",ingress=\"website\"}",
+          "values": "0+100x20"
+        },
+        {
+          "series": "nginx_ingress_controller_request_duration_seconds_bucket{namespace=\"website-prod\",ingress=\"website\",le=\"0.5\"}",
+          "values": "0+100x20"
+        },
+        {
+          "series": "nginx_ingress_controller_requests{namespace=\"website-prod\",exported_namespace=\"foreign-prod\",ingress=\"website\",status=\"500\"}",
+          "values": "0+10000x20"
+        },
+        {
+          "series": "nginx_ingress_controller_requests{namespace=\"ingress-nginx\",exported_namespace=\"website-prod\",ingress=\"foreign\",status=\"500\"}",
+          "values": "0+10000x20"
+        }
+      ],
+      "promql_expr_test": [
+        {
+          "expr": "gp:slo_error_ratio:rate5m{tenant=\"website\",env=\"prod\",slo=\"availability\"}",
+          "eval_time": "20m",
+          "exp_samples": [
+            {
+              "labels": "gp:slo_error_ratio:rate5m{tenant=\"website\",env=\"prod\",namespace=\"website-prod\",slo=\"availability\"}",
+              "value": 0
+            }
+          ]
+        },
+        {
+          "expr": "gp:slo_error_ratio:rate30m{tenant=\"website\",env=\"prod\",slo=\"availability\"}",
+          "eval_time": "20m",
+          "exp_samples": [
+            {
+              "labels": "gp:slo_error_ratio:rate30m{tenant=\"website\",env=\"prod\",namespace=\"website-prod\",slo=\"availability\"}",
+              "value": 0
+            }
+          ]
+        },
+        {
+          "expr": "gp:slo_error_ratio:rate1h{tenant=\"website\",env=\"prod\",slo=\"availability\"}",
+          "eval_time": "20m",
+          "exp_samples": [
+            {
+              "labels": "gp:slo_error_ratio:rate1h{tenant=\"website\",env=\"prod\",namespace=\"website-prod\",slo=\"availability\"}",
+              "value": 0
+            }
+          ]
+        },
+        {
+          "expr": "gp:slo_error_ratio:rate2h{tenant=\"website\",env=\"prod\",slo=\"availability\"}",
+          "eval_time": "20m",
+          "exp_samples": [
+            {
+              "labels": "gp:slo_error_ratio:rate2h{tenant=\"website\",env=\"prod\",namespace=\"website-prod\",slo=\"availability\"}",
+              "value": 0
+            }
+          ]
+        },
+        {
+          "expr": "gp:slo_error_ratio:rate6h{tenant=\"website\",env=\"prod\",slo=\"availability\"}",
+          "eval_time": "20m",
+          "exp_samples": [
+            {
+              "labels": "gp:slo_error_ratio:rate6h{tenant=\"website\",env=\"prod\",namespace=\"website-prod\",slo=\"availability\"}",
+              "value": 0
+            }
+          ]
+        },
+        {
+          "expr": "gp:slo_error_ratio:rate1d{tenant=\"website\",env=\"prod\",slo=\"availability\"}",
+          "eval_time": "20m",
+          "exp_samples": [
+            {
+              "labels": "gp:slo_error_ratio:rate1d{tenant=\"website\",env=\"prod\",namespace=\"website-prod\",slo=\"availability\"}",
+              "value": 0
+            }
+          ]
+        },
+        {
+          "expr": "gp:slo_error_ratio:rate3d{tenant=\"website\",env=\"prod\",slo=\"availability\"}",
+          "eval_time": "20m",
+          "exp_samples": [
+            {
+              "labels": "gp:slo_error_ratio:rate3d{tenant=\"website\",env=\"prod\",namespace=\"website-prod\",slo=\"availability\"}",
+              "value": 0
+            }
+          ]
+        },
+        {
+          "expr": "gp:slo_error_ratio:rate5m{tenant=\"website\",env=\"prod\",slo=\"latency\"}",
+          "eval_time": "20m",
+          "exp_samples": [
+            {
+              "labels": "gp:slo_error_ratio:rate5m{tenant=\"website\",env=\"prod\",namespace=\"website-prod\",slo=\"latency\"}",
+              "value": 0
+            }
+          ]
+        },
+        {
+          "expr": "gp:slo_error_ratio:rate30m{tenant=\"website\",env=\"prod\",slo=\"latency\"}",
+          "eval_time": "20m",
+          "exp_samples": [
+            {
+              "labels": "gp:slo_error_ratio:rate30m{tenant=\"website\",env=\"prod\",namespace=\"website-prod\",slo=\"latency\"}",
+              "value": 0
+            }
+          ]
+        },
+        {
+          "expr": "gp:slo_error_ratio:rate1h{tenant=\"website\",env=\"prod\",slo=\"latency\"}",
+          "eval_time": "20m",
+          "exp_samples": [
+            {
+              "labels": "gp:slo_error_ratio:rate1h{tenant=\"website\",env=\"prod\",namespace=\"website-prod\",slo=\"latency\"}",
+              "value": 0
+            }
+          ]
+        },
+        {
+          "expr": "gp:slo_error_ratio:rate2h{tenant=\"website\",env=\"prod\",slo=\"latency\"}",
+          "eval_time": "20m",
+          "exp_samples": [
+            {
+              "labels": "gp:slo_error_ratio:rate2h{tenant=\"website\",env=\"prod\",namespace=\"website-prod\",slo=\"latency\"}",
+              "value": 0
+            }
+          ]
+        },
+        {
+          "expr": "gp:slo_error_ratio:rate6h{tenant=\"website\",env=\"prod\",slo=\"latency\"}",
+          "eval_time": "20m",
+          "exp_samples": [
+            {
+              "labels": "gp:slo_error_ratio:rate6h{tenant=\"website\",env=\"prod\",namespace=\"website-prod\",slo=\"latency\"}",
+              "value": 0
+            }
+          ]
+        },
+        {
+          "expr": "gp:slo_error_ratio:rate1d{tenant=\"website\",env=\"prod\",slo=\"latency\"}",
+          "eval_time": "20m",
+          "exp_samples": [
+            {
+              "labels": "gp:slo_error_ratio:rate1d{tenant=\"website\",env=\"prod\",namespace=\"website-prod\",slo=\"latency\"}",
+              "value": 0
+            }
+          ]
+        },
+        {
+          "expr": "gp:slo_error_ratio:rate3d{tenant=\"website\",env=\"prod\",slo=\"latency\"}",
+          "eval_time": "20m",
+          "exp_samples": [
+            {
+              "labels": "gp:slo_error_ratio:rate3d{tenant=\"website\",env=\"prod\",namespace=\"website-prod\",slo=\"latency\"}",
+              "value": 0
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "prod: idle counters produce no ratio",
+      "interval": "1m",
+      "input_series": [
+        {
+          "series": "nginx_ingress_controller_requests{namespace=\"ingress-nginx\",exported_namespace=\"website-prod\",ingress=\"website\"}",
+          "values": "0+0x20"
+        },
+        {
+          "series": "nginx_ingress_controller_request_duration_seconds_count{namespace=\"ingress-nginx\",exported_namespace=\"website-prod\",ingress=\"website\"}",
+          "values": "0+0x20"
+        },
+        {
+          "series": "nginx_ingress_controller_request_duration_seconds_bucket{namespace=\"ingress-nginx\",exported_namespace=\"website-prod\",ingress=\"website\",le=\"0.5\"}",
+          "values": "0+0x20"
+        }
+      ],
+      "promql_expr_test": [
+        {
+          "expr": "gp:slo_error_ratio:rate5m{tenant=\"website\",env=\"prod\",slo=\"availability\"}",
+          "eval_time": "20m",
+          "exp_samples": []
+        },
+        {
+          "expr": "gp:slo_error_ratio:rate30m{tenant=\"website\",env=\"prod\",slo=\"availability\"}",
+          "eval_time": "20m",
+          "exp_samples": []
+        },
+        {
+          "expr": "gp:slo_error_ratio:rate1h{tenant=\"website\",env=\"prod\",slo=\"availability\"}",
+          "eval_time": "20m",
+          "exp_samples": []
+        },
+        {
+          "expr": "gp:slo_error_ratio:rate2h{tenant=\"website\",env=\"prod\",slo=\"availability\"}",
+          "eval_time": "20m",
+          "exp_samples": []
+        },
+        {
+          "expr": "gp:slo_error_ratio:rate6h{tenant=\"website\",env=\"prod\",slo=\"availability\"}",
+          "eval_time": "20m",
+          "exp_samples": []
+        },
+        {
+          "expr": "gp:slo_error_ratio:rate1d{tenant=\"website\",env=\"prod\",slo=\"availability\"}",
+          "eval_time": "20m",
+          "exp_samples": []
+        },
+        {
+          "expr": "gp:slo_error_ratio:rate3d{tenant=\"website\",env=\"prod\",slo=\"availability\"}",
+          "eval_time": "20m",
+          "exp_samples": []
+        },
+        {
+          "expr": "gp:slo_error_ratio:rate5m{tenant=\"website\",env=\"prod\",slo=\"latency\"}",
+          "eval_time": "20m",
+          "exp_samples": []
+        },
+        {
+          "expr": "gp:slo_error_ratio:rate30m{tenant=\"website\",env=\"prod\",slo=\"latency\"}",
+          "eval_time": "20m",
+          "exp_samples": []
+        },
+        {
+          "expr": "gp:slo_error_ratio:rate1h{tenant=\"website\",env=\"prod\",slo=\"latency\"}",
+          "eval_time": "20m",
+          "exp_samples": []
+        },
+        {
+          "expr": "gp:slo_error_ratio:rate2h{tenant=\"website\",env=\"prod\",slo=\"latency\"}",
+          "eval_time": "20m",
+          "exp_samples": []
+        },
+        {
+          "expr": "gp:slo_error_ratio:rate6h{tenant=\"website\",env=\"prod\",slo=\"latency\"}",
+          "eval_time": "20m",
+          "exp_samples": []
+        },
+        {
+          "expr": "gp:slo_error_ratio:rate1d{tenant=\"website\",env=\"prod\",slo=\"latency\"}",
+          "eval_time": "20m",
+          "exp_samples": []
+        },
+        {
+          "expr": "gp:slo_error_ratio:rate3d{tenant=\"website\",env=\"prod\",slo=\"latency\"}",
+          "eval_time": "20m",
+          "exp_samples": []
+        }
+      ]
+    },
+    {
+      "name": "prod: measured failures and counter reset activate availability while latency stays gated",
+      "interval": "1m",
+      "input_series": [
+        {
+          "series": "nginx_ingress_controller_requests{namespace=\"ingress-nginx\",exported_namespace=\"website-prod\",ingress=\"website\",status=\"200\"}",
+          "values": "0+80x10 0+80x9"
+        },
+        {
+          "series": "nginx_ingress_controller_requests{namespace=\"ingress-nginx\",exported_namespace=\"website-prod\",ingress=\"website\",status=\"503\"}",
+          "values": "0+20x10 0+20x9"
+        },
+        {
+          "series": "nginx_ingress_controller_request_duration_seconds_count{namespace=\"ingress-nginx\",exported_namespace=\"website-prod\",ingress=\"website\"}",
+          "values": "0+100x10 0+100x9"
+        },
+        {
+          "series": "nginx_ingress_controller_request_duration_seconds_bucket{namespace=\"ingress-nginx\",exported_namespace=\"website-prod\",ingress=\"website\",le=\"0.5\"}",
+          "values": "0+80x10 0+80x9"
+        }
+      ],
+      "promql_expr_test": [
+        {
+          "expr": "gp:slo_error_ratio:rate5m{tenant=\"website\",env=\"prod\",slo=\"availability\"}",
+          "eval_time": "20m",
+          "exp_samples": [
+            {
+              "labels": "gp:slo_error_ratio:rate5m{tenant=\"website\",env=\"prod\",namespace=\"website-prod\",slo=\"availability\"}",
+              "value": 0.2
+            }
+          ]
+        },
+        {
+          "expr": "gp:slo_error_ratio:rate30m{tenant=\"website\",env=\"prod\",slo=\"availability\"}",
+          "eval_time": "20m",
+          "exp_samples": [
+            {
+              "labels": "gp:slo_error_ratio:rate30m{tenant=\"website\",env=\"prod\",namespace=\"website-prod\",slo=\"availability\"}",
+              "value": 0.2
+            }
+          ]
+        },
+        {
+          "expr": "gp:slo_error_ratio:rate1h{tenant=\"website\",env=\"prod\",slo=\"availability\"}",
+          "eval_time": "20m",
+          "exp_samples": [
+            {
+              "labels": "gp:slo_error_ratio:rate1h{tenant=\"website\",env=\"prod\",namespace=\"website-prod\",slo=\"availability\"}",
+              "value": 0.2
+            }
+          ]
+        },
+        {
+          "expr": "gp:slo_error_ratio:rate2h{tenant=\"website\",env=\"prod\",slo=\"availability\"}",
+          "eval_time": "20m",
+          "exp_samples": [
+            {
+              "labels": "gp:slo_error_ratio:rate2h{tenant=\"website\",env=\"prod\",namespace=\"website-prod\",slo=\"availability\"}",
+              "value": 0.2
+            }
+          ]
+        },
+        {
+          "expr": "gp:slo_error_ratio:rate6h{tenant=\"website\",env=\"prod\",slo=\"availability\"}",
+          "eval_time": "20m",
+          "exp_samples": [
+            {
+              "labels": "gp:slo_error_ratio:rate6h{tenant=\"website\",env=\"prod\",namespace=\"website-prod\",slo=\"availability\"}",
+              "value": 0.2
+            }
+          ]
+        },
+        {
+          "expr": "gp:slo_error_ratio:rate1d{tenant=\"website\",env=\"prod\",slo=\"availability\"}",
+          "eval_time": "20m",
+          "exp_samples": [
+            {
+              "labels": "gp:slo_error_ratio:rate1d{tenant=\"website\",env=\"prod\",namespace=\"website-prod\",slo=\"availability\"}",
+              "value": 0.2
+            }
+          ]
+        },
+        {
+          "expr": "gp:slo_error_ratio:rate3d{tenant=\"website\",env=\"prod\",slo=\"availability\"}",
+          "eval_time": "20m",
+          "exp_samples": [
+            {
+              "labels": "gp:slo_error_ratio:rate3d{tenant=\"website\",env=\"prod\",namespace=\"website-prod\",slo=\"availability\"}",
+              "value": 0.2
+            }
+          ]
+        },
+        {
+          "expr": "gp:slo_error_ratio:rate5m{tenant=\"website\",env=\"prod\",slo=\"latency\"}",
+          "eval_time": "20m",
+          "exp_samples": [
+            {
+              "labels": "gp:slo_error_ratio:rate5m{tenant=\"website\",env=\"prod\",namespace=\"website-prod\",slo=\"latency\"}",
+              "value": 0.2
+            }
+          ]
+        },
+        {
+          "expr": "gp:slo_error_ratio:rate30m{tenant=\"website\",env=\"prod\",slo=\"latency\"}",
+          "eval_time": "20m",
+          "exp_samples": [
+            {
+              "labels": "gp:slo_error_ratio:rate30m{tenant=\"website\",env=\"prod\",namespace=\"website-prod\",slo=\"latency\"}",
+              "value": 0.2
+            }
+          ]
+        },
+        {
+          "expr": "gp:slo_error_ratio:rate1h{tenant=\"website\",env=\"prod\",slo=\"latency\"}",
+          "eval_time": "20m",
+          "exp_samples": [
+            {
+              "labels": "gp:slo_error_ratio:rate1h{tenant=\"website\",env=\"prod\",namespace=\"website-prod\",slo=\"latency\"}",
+              "value": 0.2
+            }
+          ]
+        },
+        {
+          "expr": "gp:slo_error_ratio:rate2h{tenant=\"website\",env=\"prod\",slo=\"latency\"}",
+          "eval_time": "20m",
+          "exp_samples": [
+            {
+              "labels": "gp:slo_error_ratio:rate2h{tenant=\"website\",env=\"prod\",namespace=\"website-prod\",slo=\"latency\"}",
+              "value": 0.2
+            }
+          ]
+        },
+        {
+          "expr": "gp:slo_error_ratio:rate6h{tenant=\"website\",env=\"prod\",slo=\"latency\"}",
+          "eval_time": "20m",
+          "exp_samples": [
+            {
+              "labels": "gp:slo_error_ratio:rate6h{tenant=\"website\",env=\"prod\",namespace=\"website-prod\",slo=\"latency\"}",
+              "value": 0.2
+            }
+          ]
+        },
+        {
+          "expr": "gp:slo_error_ratio:rate1d{tenant=\"website\",env=\"prod\",slo=\"latency\"}",
+          "eval_time": "20m",
+          "exp_samples": [
+            {
+              "labels": "gp:slo_error_ratio:rate1d{tenant=\"website\",env=\"prod\",namespace=\"website-prod\",slo=\"latency\"}",
+              "value": 0.2
+            }
+          ]
+        },
+        {
+          "expr": "gp:slo_error_ratio:rate3d{tenant=\"website\",env=\"prod\",slo=\"latency\"}",
+          "eval_time": "20m",
+          "exp_samples": [
+            {
+              "labels": "gp:slo_error_ratio:rate3d{tenant=\"website\",env=\"prod\",namespace=\"website-prod\",slo=\"latency\"}",
+              "value": 0.2
+            }
+          ]
+        }
+      ],
+      "alert_rule_test": [
+        {
+          "eval_time": "20m",
+          "alertname": "GoldenPathAvailabilityFastBurn",
+          "exp_alerts": [
+            {
+              "exp_labels": {
+                "tenant": "website",
+                "env": "prod",
+                "namespace": "website-prod",
+                "slo": "availability",
+                "severity": "critical"
+              },
+              "exp_annotations": {
+                "summary": "website-prod availability error budget fast burn",
+                "description": "Measured ingress 5xx fraction exceeds paired 14.4x (5m AND 1h) OR 6x (30m AND 6h) burn thresholds against the nominal 30-day objective 0.995. Critical routes to page. Low volume is a prior, not a fitted target; absent or zero traffic is not success. Check telemetry diagnostics.",
+                "runbook_url": "https://github.com/leemarkus/k8s-golden-path/blob/main/docs/runbooks/slo-burn.md",
+                "activation": "ENABLED: repository runbook body published by the runbook stage; live activation verifies live discovery/routing and runbooks use the golden-path repository main-branch URL."
+              }
+            }
+          ]
+        },
+        {
+          "eval_time": "20m",
+          "alertname": "GoldenPathAvailabilitySlowBurn",
+          "exp_alerts": [
+            {
+              "exp_labels": {
+                "tenant": "website",
+                "env": "prod",
+                "namespace": "website-prod",
+                "slo": "availability",
+                "severity": "warning"
+              },
+              "exp_annotations": {
+                "summary": "website-prod availability error budget slow burn",
+                "description": "Measured ingress 5xx fraction exceeds paired 3x (2h AND 1d) OR 1x (6h AND 3d) burn thresholds against the nominal 30-day objective 0.995. Warning appears on the hourly status board. Low volume is a prior, not a fitted target; absent or zero traffic is not success. Check telemetry diagnostics.",
+                "runbook_url": "https://github.com/leemarkus/k8s-golden-path/blob/main/docs/runbooks/slo-burn.md",
+                "activation": "ENABLED: repository runbook body published by the runbook stage; live activation verifies live discovery/routing and runbooks use the golden-path repository main-branch URL."
+              }
+            }
+          ]
+        },
+        {
+          "eval_time": "20m",
+          "alertname": "GoldenPathLatencyFastBurn",
+          "exp_alerts": []
+        },
+        {
+          "eval_time": "20m",
+          "alertname": "GoldenPathLatencySlowBurn",
+          "exp_alerts": []
+        }
+      ]
+    },
+    {
+      "name": "Missing telemetry fires diagnostics; burns require observations",
+      "interval": "1m",
+      "input_series": [],
+      "alert_rule_test": [
+        {
+          "eval_time": "20m",
+          "alertname": "GoldenPathAvailabilityFastBurn",
+          "exp_alerts": []
+        },
+        {
+          "eval_time": "20m",
+          "alertname": "GoldenPathAvailabilitySlowBurn",
+          "exp_alerts": []
+        },
+        {
+          "eval_time": "20m",
+          "alertname": "GoldenPathAvailabilityTelemetryMissing",
+          "exp_alerts": [
+            {
+              "exp_labels": {
+                "tenant": "website",
+                "env": "dev",
+                "namespace": "website-dev",
+                "slo": "availability",
+                "severity": "warning"
+              },
+              "exp_annotations": {
+                "summary": "website-dev: AvailabilityTelemetryMissing",
+                "description": "Ingress request counters are missing or stale; availability is unobserved, not healthy. Check ingress existence, scrape discovery, release labels and exported_namespace/namespace selectors.",
+                "runbook_url": "https://github.com/leemarkus/k8s-golden-path/blob/main/docs/runbooks/telemetry-missing.md",
+                "activation": "ENABLED: repository runbook body published by the runbook stage; 15m startup grace. Live activation verifies live discovery/routing."
+              }
+            },
+            {
+              "exp_labels": {
+                "tenant": "website",
+                "env": "prod",
+                "namespace": "website-prod",
+                "slo": "availability",
+                "severity": "warning"
+              },
+              "exp_annotations": {
+                "summary": "website-prod: AvailabilityTelemetryMissing",
+                "description": "Ingress request counters are missing or stale; availability is unobserved, not healthy. Check ingress existence, scrape discovery, release labels and exported_namespace/namespace selectors.",
+                "runbook_url": "https://github.com/leemarkus/k8s-golden-path/blob/main/docs/runbooks/telemetry-missing.md",
+                "activation": "ENABLED: repository runbook body published by the runbook stage; 15m startup grace. Live activation verifies live discovery/routing."
+              }
+            }
+          ]
+        },
+        {
+          "eval_time": "20m",
+          "alertname": "GoldenPathLatencyTelemetryMissing",
+          "exp_alerts": [
+            {
+              "exp_labels": {
+                "tenant": "website",
+                "env": "dev",
+                "namespace": "website-dev",
+                "slo": "latency",
+                "severity": "warning"
+              },
+              "exp_annotations": {
+                "summary": "website-dev: LatencyTelemetryMissing",
+                "description": "The latency count or required 0.5s bucket is missing or stale. Latency is unobserved; verify histogram configuration and scraping before activation.",
+                "runbook_url": "https://github.com/leemarkus/k8s-golden-path/blob/main/docs/runbooks/telemetry-missing.md",
+                "activation": "ENABLED: repository runbook body published by the runbook stage; 15m startup grace. Live activation verifies live discovery/routing."
+              }
+            },
+            {
+              "exp_labels": {
+                "tenant": "website",
+                "env": "prod",
+                "namespace": "website-prod",
+                "slo": "latency",
+                "severity": "warning"
+              },
+              "exp_annotations": {
+                "summary": "website-prod: LatencyTelemetryMissing",
+                "description": "The latency count or required 0.5s bucket is missing or stale. Latency is unobserved; verify histogram configuration and scraping before activation.",
+                "runbook_url": "https://github.com/leemarkus/k8s-golden-path/blob/main/docs/runbooks/telemetry-missing.md",
+                "activation": "ENABLED: repository runbook body published by the runbook stage; 15m startup grace. Live activation verifies live discovery/routing."
+              }
+            }
+          ]
+        },
+        {
+          "eval_time": "20m",
+          "alertname": "GoldenPathNoTraffic",
+          "exp_alerts": []
+        },
+        {
+          "eval_time": "20m",
+          "alertname": "GoldenPathLatencyFastBurn",
+          "exp_alerts": []
+        },
+        {
+          "eval_time": "20m",
+          "alertname": "GoldenPathLatencySlowBurn",
+          "exp_alerts": []
+        }
+      ]
+    }
+  ]
+}

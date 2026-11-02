@@ -1,0 +1,724 @@
+# Run: python3 tests/prometheus/run.py (extracts the actual PrometheusRule spec).
+# New backtest cases use 100 fsyncs/s on node-3 and a healthy peer at 100x.
+# One-minute samples: a full 6h/1h selector spans 359/59 counter increments.
+# Typical night starts at 16:30; spike increments are (22:30,23:30] and (01:30,02:30].
+# Worst night: hourly 7.1%/4%/3% spikes; 1.9% between spikes is synthetic,
+# chosen to match the observed ~3.3% 6h maximum, not reconstruct a raw trace.
+rule_files:
+- etcd-rules.yaml
+evaluation_interval: 1m
+tests:
+- name: 10m flapping survives the old hold-reset failure; healthy peer cannot dilute
+  interval: 1m
+  input_series:
+  - series: etcd_disk_wal_fsync_duration_seconds_bucket{instance="node-3",le="+Inf"}
+    values: 0+100x130
+  - series: etcd_disk_wal_fsync_duration_seconds_bucket{instance="node-3",le="0.016"}
+    values: 0+80x10 900+100x9 1880+80x9 2700+100x9 3680+80x9 4500+100x9 5480+80x9 6300+100x9 7280+80x9 8100+100x9 9080+80x9
+      9900+100x9 10880+80x9
+  - series: etcd_disk_wal_fsync_duration_seconds_bucket{instance="node-1",le="+Inf"}
+    values: 0+10000x130
+  - series: etcd_disk_wal_fsync_duration_seconds_bucket{instance="node-1",le="0.016"}
+    values: 0+10000x130
+  promql_expr_test:
+  - expr: ALERTS{alertname=~"EtcdWalFsync(Slow|Critical)",alertstate="firing"}
+    eval_time: 60m
+    exp_samples:
+    - labels: ALERTS{alertname="EtcdWalFsyncSlow",alertstate="firing",instance="node-3",severity="warning"}
+      value: 1
+    - labels: ALERTS{alertname="EtcdWalFsyncCritical",alertstate="firing",instance="node-3",severity="critical"}
+      value: 1
+  - expr: ALERTS{alertname=~"EtcdWalFsync(Slow|Critical)",alertstate="firing"}
+    eval_time: 65m
+    exp_samples:
+    - labels: ALERTS{alertname="EtcdWalFsyncSlow",alertstate="firing",instance="node-3",severity="warning"}
+      value: 1
+    - labels: ALERTS{alertname="EtcdWalFsyncCritical",alertstate="firing",instance="node-3",severity="critical"}
+      value: 1
+  - expr: ALERTS{alertname=~"EtcdWalFsync(Slow|Critical)",alertstate="firing"}
+    eval_time: 70m
+    exp_samples:
+    - labels: ALERTS{alertname="EtcdWalFsyncSlow",alertstate="firing",instance="node-3",severity="warning"}
+      value: 1
+    - labels: ALERTS{alertname="EtcdWalFsyncCritical",alertstate="firing",instance="node-3",severity="critical"}
+      value: 1
+  - expr: ALERTS{alertname=~"EtcdWalFsync(Slow|Critical)",alertstate="firing"}
+    eval_time: 75m
+    exp_samples:
+    - labels: ALERTS{alertname="EtcdWalFsyncSlow",alertstate="firing",instance="node-3",severity="warning"}
+      value: 1
+    - labels: ALERTS{alertname="EtcdWalFsyncCritical",alertstate="firing",instance="node-3",severity="critical"}
+      value: 1
+  - expr: ALERTS{alertname=~"EtcdWalFsync(Slow|Critical)",alertstate="firing"}
+    eval_time: 80m
+    exp_samples:
+    - labels: ALERTS{alertname="EtcdWalFsyncSlow",alertstate="firing",instance="node-3",severity="warning"}
+      value: 1
+    - labels: ALERTS{alertname="EtcdWalFsyncCritical",alertstate="firing",instance="node-3",severity="critical"}
+      value: 1
+  - expr: ALERTS{alertname=~"EtcdWalFsync(Slow|Critical)",alertstate="firing"}
+    eval_time: 90m
+    exp_samples:
+    - labels: ALERTS{alertname="EtcdWalFsyncSlow",alertstate="firing",instance="node-3",severity="warning"}
+      value: 1
+    - labels: ALERTS{alertname="EtcdWalFsyncCritical",alertstate="firing",instance="node-3",severity="critical"}
+      value: 1
+  - expr: ALERTS{alertname=~"EtcdWalFsync(Slow|Critical)",alertstate="firing"}
+    eval_time: 100m
+    exp_samples:
+    - labels: ALERTS{alertname="EtcdWalFsyncSlow",alertstate="firing",instance="node-3",severity="warning"}
+      value: 1
+    - labels: ALERTS{alertname="EtcdWalFsyncCritical",alertstate="firing",instance="node-3",severity="critical"}
+      value: 1
+  - expr: ALERTS{alertname=~"EtcdWalFsync(Slow|Critical)",alertstate="firing"}
+    eval_time: 110m
+    exp_samples:
+    - labels: ALERTS{alertname="EtcdWalFsyncSlow",alertstate="firing",instance="node-3",severity="warning"}
+      value: 1
+    - labels: ALERTS{alertname="EtcdWalFsyncCritical",alertstate="firing",instance="node-3",severity="critical"}
+      value: 1
+  - expr: ALERTS{alertname=~"EtcdWalFsync(Slow|Critical)",alertstate="firing"}
+    eval_time: 120m
+    exp_samples:
+    - labels: ALERTS{alertname="EtcdWalFsyncSlow",alertstate="firing",instance="node-3",severity="warning"}
+      value: 1
+    - labels: ALERTS{alertname="EtcdWalFsyncCritical",alertstate="firing",instance="node-3",severity="critical"}
+      value: 1
+- name: observed 1.3 percent baseline for 12h never warns or pages
+  interval: 1m
+  input_series:
+  - series: etcd_disk_wal_fsync_duration_seconds_bucket{instance="node-3",le="+Inf"}
+    values: 0+6000x720
+  - series: etcd_disk_wal_fsync_duration_seconds_bucket{instance="node-3",le="0.016"}
+    values: 0 5922+5922x719
+  - series: etcd_disk_wal_fsync_duration_seconds_bucket{instance="node-1",le="+Inf"}
+    values: 0+600000x720
+  - series: etcd_disk_wal_fsync_duration_seconds_bucket{instance="node-1",le="0.016"}
+    values: 0+600000x720
+  promql_expr_test:
+  - expr: ALERTS{alertname=~"EtcdWalFsync(Slow|Critical)",alertstate="firing"}
+    eval_time: 1m
+    exp_samples: []
+  - expr: ALERTS{alertname=~"EtcdWalFsync(Slow|Critical)",alertstate="firing"}
+    eval_time: 16m
+    exp_samples: []
+  - expr: ALERTS{alertname=~"EtcdWalFsync(Slow|Critical)",alertstate="firing"}
+    eval_time: 60m
+    exp_samples: []
+  - expr: ALERTS{alertname=~"EtcdWalFsync(Slow|Critical)",alertstate="firing"}
+    eval_time: 360m
+    exp_samples: []
+  - expr: ALERTS{alertname=~"EtcdWalFsync(Slow|Critical)",alertstate="firing"}
+    eval_time: 720m
+    exp_samples: []
+  - expr: max_over_time(ALERTS{alertname=~"EtcdWalFsync(Slow|Critical)",alertstate="firing"}[720m])
+    eval_time: 720m
+    exp_samples: []
+- name: one minute 20 percent spike after warmup never fires
+  interval: 1m
+  input_series:
+  - series: etcd_disk_wal_fsync_duration_seconds_bucket{instance="node-3",le="+Inf"}
+    values: 0+100x130
+  - series: etcd_disk_wal_fsync_duration_seconds_bucket{instance="node-3",le="0.016"}
+    values: 0+100x69 6980+100x60
+  promql_expr_test:
+  - expr: ALERTS{alertname=~"EtcdWalFsync(Slow|Critical)",alertstate="firing"}
+    eval_time: 60m
+    exp_samples: []
+  - expr: ALERTS{alertname=~"EtcdWalFsync(Slow|Critical)",alertstate="firing"}
+    eval_time: 70m
+    exp_samples: []
+  - expr: ALERTS{alertname=~"EtcdWalFsync(Slow|Critical)",alertstate="firing"}
+    eval_time: 74m
+    exp_samples: []
+  - expr: ALERTS{alertname=~"EtcdWalFsync(Slow|Critical)",alertstate="firing"}
+    eval_time: 75m
+    exp_samples: []
+  - expr: ALERTS{alertname=~"EtcdWalFsync(Slow|Critical)",alertstate="firing"}
+    eval_time: 80m
+    exp_samples: []
+  - expr: ALERTS{alertname=~"EtcdWalFsync(Slow|Critical)",alertstate="firing"}
+    eval_time: 90m
+    exp_samples: []
+  - expr: ALERTS{alertname=~"EtcdWalFsync(Slow|Critical)",alertstate="firing"}
+    eval_time: 120m
+    exp_samples: []
+  - expr: ALERTS{alertname=~"EtcdWalFsync(Slow|Critical)",alertstate="firing"}
+    eval_time: 130m
+    exp_samples: []
+- name: steady 2 percent stays below the retuned warning budget
+  interval: 1m
+  input_series:
+  - series: etcd_disk_wal_fsync_duration_seconds_bucket{instance="node-3",le="+Inf"}
+    values: 0+100x130
+  - series: etcd_disk_wal_fsync_duration_seconds_bucket{instance="node-3",le="0.016"}
+    values: 0+98x130
+  promql_expr_test:
+  - expr: ALERTS{alertname=~"EtcdWalFsync(Slow|Critical)",alertstate="firing"}
+    eval_time: 60m
+    exp_samples: []
+  - expr: ALERTS{alertname=~"EtcdWalFsync(Slow|Critical)",alertstate="firing"}
+    eval_time: 90m
+    exp_samples: []
+  - expr: ALERTS{alertname=~"EtcdWalFsync(Slow|Critical)",alertstate="firing"}
+    eval_time: 120m
+    exp_samples: []
+- name: exact warning boundary 4 percent does not fire
+  interval: 1m
+  input_series:
+  - series: etcd_disk_wal_fsync_duration_seconds_bucket{instance="node-3",le="+Inf"}
+    values: 0+6000x720
+  - series: etcd_disk_wal_fsync_duration_seconds_bucket{instance="node-3",le="0.016"}
+    values: 0 5760+5760x719
+  - series: etcd_disk_wal_fsync_duration_seconds_bucket{instance="node-1",le="+Inf"}
+    values: 0+600000x720
+  - series: etcd_disk_wal_fsync_duration_seconds_bucket{instance="node-1",le="0.016"}
+    values: 0+600000x720
+  promql_expr_test:
+  - expr: ALERTS{alertname=~"EtcdWalFsync(Slow|Critical)",alertstate="firing"}
+    eval_time: 360m
+    exp_samples: []
+  - expr: ALERTS{alertname=~"EtcdWalFsync(Slow|Critical)",alertstate="firing"}
+    eval_time: 540m
+    exp_samples: []
+  - expr: ALERTS{alertname=~"EtcdWalFsync(Slow|Critical)",alertstate="firing"}
+    eval_time: 720m
+    exp_samples: []
+- name: exact critical boundary 5 percent only warns
+  interval: 1m
+  input_series:
+  - series: etcd_disk_wal_fsync_duration_seconds_bucket{instance="node-3",le="+Inf"}
+    values: 0+100x130
+  - series: etcd_disk_wal_fsync_duration_seconds_bucket{instance="node-3",le="0.016"}
+    values: 0+95x130
+  promql_expr_test:
+  - expr: ALERTS{alertname=~"EtcdWalFsync(Slow|Critical)",alertstate="firing"}
+    eval_time: 60m
+    exp_samples:
+    - labels: ALERTS{alertname="EtcdWalFsyncSlow",alertstate="firing",instance="node-3",severity="warning"}
+      value: 1
+  - expr: ALERTS{alertname=~"EtcdWalFsync(Slow|Critical)",alertstate="firing"}
+    eval_time: 90m
+    exp_samples:
+    - labels: ALERTS{alertname="EtcdWalFsyncSlow",alertstate="firing",instance="node-3",severity="warning"}
+      value: 1
+  - expr: ALERTS{alertname=~"EtcdWalFsync(Slow|Critical)",alertstate="firing"}
+    eval_time: 120m
+    exp_samples:
+    - labels: ALERTS{alertname="EtcdWalFsyncSlow",alertstate="firing",instance="node-3",severity="warning"}
+      value: 1
+- name: zero traffic has no ratio
+  interval: 1m
+  input_series:
+  - series: etcd_disk_wal_fsync_duration_seconds_bucket{instance="node-3",le="+Inf"}
+    values: 0+0x130
+  - series: etcd_disk_wal_fsync_duration_seconds_bucket{instance="node-3",le="0.016"}
+    values: 0+0x130
+  promql_expr_test:
+  - expr: ALERTS{alertname=~"EtcdWalFsync(Slow|Critical)",alertstate="firing"}
+    eval_time: 60m
+    exp_samples: []
+  - expr: ALERTS{alertname=~"EtcdWalFsync(Slow|Critical)",alertstate="firing"}
+    eval_time: 90m
+    exp_samples: []
+  - expr: ALERTS{alertname=~"EtcdWalFsync(Slow|Critical)",alertstate="firing"}
+    eval_time: 120m
+    exp_samples: []
+- name: missing histogram has no WAL alert
+  interval: 1m
+  input_series: []
+  promql_expr_test:
+  - expr: ALERTS{alertname=~"EtcdWalFsync(Slow|Critical)",alertstate="firing"}
+    eval_time: 60m
+    exp_samples: []
+  - expr: ALERTS{alertname=~"EtcdWalFsync(Slow|Critical)",alertstate="firing"}
+    eval_time: 90m
+    exp_samples: []
+  - expr: ALERTS{alertname=~"EtcdWalFsync(Slow|Critical)",alertstate="firing"}
+    eval_time: 120m
+    exp_samples: []
+- name: counter reset does not hide ongoing degradation
+  interval: 1m
+  input_series:
+  - series: etcd_disk_wal_fsync_duration_seconds_bucket{instance="node-3",le="+Inf"}
+    values: 0+100x89 100+100x40
+  - series: etcd_disk_wal_fsync_duration_seconds_bucket{instance="node-3",le="0.016"}
+    values: 0+80x89 80+80x40
+  promql_expr_test:
+  - expr: ALERTS{alertname=~"EtcdWalFsync(Slow|Critical)",alertstate="firing"}
+    eval_time: 89m
+    exp_samples:
+    - labels: ALERTS{alertname="EtcdWalFsyncSlow",alertstate="firing",instance="node-3",severity="warning"}
+      value: 1
+    - labels: ALERTS{alertname="EtcdWalFsyncCritical",alertstate="firing",instance="node-3",severity="critical"}
+      value: 1
+  - expr: ALERTS{alertname=~"EtcdWalFsync(Slow|Critical)",alertstate="firing"}
+    eval_time: 90m
+    exp_samples:
+    - labels: ALERTS{alertname="EtcdWalFsyncSlow",alertstate="firing",instance="node-3",severity="warning"}
+      value: 1
+    - labels: ALERTS{alertname="EtcdWalFsyncCritical",alertstate="firing",instance="node-3",severity="critical"}
+      value: 1
+  - expr: ALERTS{alertname=~"EtcdWalFsync(Slow|Critical)",alertstate="firing"}
+    eval_time: 95m
+    exp_samples:
+    - labels: ALERTS{alertname="EtcdWalFsyncSlow",alertstate="firing",instance="node-3",severity="warning"}
+      value: 1
+    - labels: ALERTS{alertname="EtcdWalFsyncCritical",alertstate="firing",instance="node-3",severity="critical"}
+      value: 1
+  - expr: ALERTS{alertname=~"EtcdWalFsync(Slow|Critical)",alertstate="firing"}
+    eval_time: 120m
+    exp_samples:
+    - labels: ALERTS{alertname="EtcdWalFsyncSlow",alertstate="firing",instance="node-3",severity="warning"}
+      value: 1
+    - labels: ALERTS{alertname="EtcdWalFsyncCritical",alertstate="firing",instance="node-3",severity="critical"}
+      value: 1
+- name: short hold pending before 6m
+  interval: 1m
+  input_series:
+  - series: etcd_disk_wal_fsync_duration_seconds_bucket{instance="node-3",le="+Inf"}
+    values: 0+100x130
+  - series: etcd_disk_wal_fsync_duration_seconds_bucket{instance="node-3",le="0.016"}
+    values: 0+80x130
+  promql_expr_test:
+  - expr: ALERTS{alertname=~"EtcdWalFsync(Slow|Critical)",alertstate="firing"}
+    eval_time: 1m
+    exp_samples: []
+  - expr: ALERTS{alertname=~"EtcdWalFsync(Slow|Critical)",alertstate="firing"}
+    eval_time: 5m
+    exp_samples: []
+- name: critical fires at 6m while warning waits until 16m with short history
+  interval: 1m
+  input_series:
+  - series: etcd_disk_wal_fsync_duration_seconds_bucket{instance="node-3",le="+Inf"}
+    values: 0+100x130
+  - series: etcd_disk_wal_fsync_duration_seconds_bucket{instance="node-3",le="0.016"}
+    values: 0+80x130
+  promql_expr_test:
+  - expr: ALERTS{alertname=~"EtcdWalFsync(Slow|Critical)",alertstate="firing"}
+    eval_time: 6m
+    exp_samples:
+    - labels: ALERTS{alertname="EtcdWalFsyncCritical",alertstate="firing",instance="node-3",severity="critical"}
+      value: 1
+  - expr: ALERTS{alertname=~"EtcdWalFsync(Slow|Critical)",alertstate="firing"}
+    eval_time: 15m
+    exp_samples:
+    - labels: ALERTS{alertname="EtcdWalFsyncCritical",alertstate="firing",instance="node-3",severity="critical"}
+      value: 1
+  - expr: ALERTS{alertname=~"EtcdWalFsync(Slow|Critical)",alertstate="firing"}
+    eval_time: 16m
+    exp_samples:
+    - labels: ALERTS{alertname="EtcdWalFsyncSlow",alertstate="firing",instance="node-3",severity="warning"}
+      value: 1
+    - labels: ALERTS{alertname="EtcdWalFsyncCritical",alertstate="firing",instance="node-3",severity="critical"}
+      value: 1
+  - expr: ALERTS{alertname="EtcdWalFsyncSlow",alertstate="pending"}
+    eval_time: 15m
+    exp_samples:
+    - labels: ALERTS{alertname="EtcdWalFsyncSlow",alertstate="pending",instance="node-3",severity="warning"}
+      value: 1
+- name: single 20m backup at 30 percent slow after 6h healthy never warns or pages
+  interval: 1m
+  input_series:
+  - series: etcd_disk_wal_fsync_duration_seconds_bucket{instance="node-3",le="+Inf"}
+    values: 0+6000x780
+  - series: etcd_disk_wal_fsync_duration_seconds_bucket{instance="node-3",le="0.016"}
+    values: 0 6000+6000x359 2164200+4200x19 2250000+6000x399
+  - series: etcd_disk_wal_fsync_duration_seconds_bucket{instance="node-1",le="+Inf"}
+    values: 0+600000x780
+  - series: etcd_disk_wal_fsync_duration_seconds_bucket{instance="node-1",le="0.016"}
+    values: 0+600000x780
+  promql_expr_test:
+  - expr: ALERTS{alertname=~"EtcdWalFsync(Slow|Critical)",alertstate="firing"}
+    eval_time: 360m
+    exp_samples: []
+  - expr: ALERTS{alertname=~"EtcdWalFsync(Slow|Critical)",alertstate="firing"}
+    eval_time: 380m
+    exp_samples: []
+  - expr: ALERTS{alertname=~"EtcdWalFsync(Slow|Critical)",alertstate="firing"}
+    eval_time: 400m
+    exp_samples: []
+  - expr: ALERTS{alertname=~"EtcdWalFsync(Slow|Critical)",alertstate="firing"}
+    eval_time: 445m
+    exp_samples: []
+  - expr: max_over_time(ALERTS{alertname=~"EtcdWalFsync(Slow|Critical)",alertstate="firing"}[780m])
+    eval_time: 780m
+    exp_samples: []
+- name: 22:30 and 02:00 backups 210m apart at 30 percent slow never warn or page
+  interval: 1m
+  input_series:
+  - series: etcd_disk_wal_fsync_duration_seconds_bucket{instance="node-3",le="+Inf"}
+    values: 0+6000x990
+  - series: etcd_disk_wal_fsync_duration_seconds_bucket{instance="node-3",le="0.016"}
+    values: 0 6000+6000x359 2164200+4200x19 2250000+6000x189 3388200+4200x19 3474000+6000x399
+  - series: etcd_disk_wal_fsync_duration_seconds_bucket{instance="node-1",le="+Inf"}
+    values: 0+600000x990
+  - series: etcd_disk_wal_fsync_duration_seconds_bucket{instance="node-1",le="0.016"}
+    values: 0+600000x990
+  promql_expr_test:
+  - expr: ALERTS{alertname=~"EtcdWalFsync(Slow|Critical)",alertstate="firing"}
+    eval_time: 380m
+    exp_samples: []
+  - expr: ALERTS{alertname=~"EtcdWalFsync(Slow|Critical)",alertstate="firing"}
+    eval_time: 445m
+    exp_samples: []
+  - expr: ALERTS{alertname=~"EtcdWalFsync(Slow|Critical)",alertstate="firing"}
+    eval_time: 590m
+    exp_samples: []
+  - expr: ALERTS{alertname=~"EtcdWalFsync(Slow|Critical)",alertstate="firing"}
+    eval_time: 655m
+    exp_samples: []
+  - expr: max_over_time(ALERTS{alertname=~"EtcdWalFsync(Slow|Critical)",alertstate="firing"}[990m])
+    eval_time: 990m
+    exp_samples: []
+- name: sustained 30 percent slow after 6h healthy pages then recent recovery clears
+  interval: 1m
+  input_series:
+  - series: etcd_disk_wal_fsync_duration_seconds_bucket{instance="node-3",le="+Inf"}
+    values: 0+6000x900
+  - series: etcd_disk_wal_fsync_duration_seconds_bucket{instance="node-3",le="0.016"}
+    values: 0 6000+6000x359 2164200+4200x179 2922000+6000x359
+  - series: etcd_disk_wal_fsync_duration_seconds_bucket{instance="node-1",le="+Inf"}
+    values: 0+600000x900
+  - series: etcd_disk_wal_fsync_duration_seconds_bucket{instance="node-1",le="0.016"}
+    values: 0+600000x900
+  promql_expr_test:
+  - expr: ALERTS{alertname=~"EtcdWalFsync(Slow|Critical)",alertstate="firing"}
+    eval_time: 380m
+    exp_samples: []
+  - expr: ALERTS{alertname=~"EtcdWalFsync(Slow|Critical)",alertstate="firing"}
+    eval_time: 419m
+    exp_samples: []
+  - expr: ALERTS{alertname=~"EtcdWalFsync(Slow|Critical)",alertstate="firing"}
+    eval_time: 423m
+    exp_samples:
+    - labels: ALERTS{alertname="EtcdWalFsyncSlow",alertstate="firing",instance="node-3",severity="warning"}
+      value: 1
+  - expr: ALERTS{alertname=~"EtcdWalFsync(Slow|Critical)",alertstate="firing"}
+    eval_time: 430m
+    exp_samples:
+    - labels: ALERTS{alertname="EtcdWalFsyncSlow",alertstate="firing",instance="node-3",severity="warning"}
+      value: 1
+    - labels: ALERTS{alertname="EtcdWalFsyncCritical",alertstate="firing",instance="node-3",severity="critical"}
+      value: 1
+  - expr: ALERTS{alertname=~"EtcdWalFsync(Slow|Critical)",alertstate="firing"}
+    eval_time: 540m
+    exp_samples:
+    - labels: ALERTS{alertname="EtcdWalFsyncSlow",alertstate="firing",instance="node-3",severity="warning"}
+      value: 1
+    - labels: ALERTS{alertname="EtcdWalFsyncCritical",alertstate="firing",instance="node-3",severity="critical"}
+      value: 1
+  - expr: ALERTS{alertname=~"EtcdWalFsync(Slow|Critical)",alertstate="firing"}
+    eval_time: 605m
+    exp_samples:
+    - labels: ALERTS{alertname="EtcdWalFsyncSlow",alertstate="firing",instance="node-3",severity="warning"}
+      value: 1
+  - expr: ALERTS{alertname=~"EtcdWalFsync(Slow|Critical)",alertstate="firing"}
+    eval_time: 850m
+    exp_samples:
+    - labels: ALERTS{alertname="EtcdWalFsyncSlow",alertstate="firing",instance="node-3",severity="warning"}
+      value: 1
+  - expr: ALERTS{alertname=~"EtcdWalFsync(Slow|Critical)",alertstate="firing"}
+    eval_time: 852m
+    exp_samples: []
+  - expr: ALERTS{alertname=~"EtcdWalFsync(Slow|Critical)",alertstate="firing"}
+    eval_time: 900m
+    exp_samples: []
+- name: node-3 10m flapping after 6h healthy eventually pages despite busy healthy peer
+  interval: 1m
+  input_series:
+  - series: etcd_disk_wal_fsync_duration_seconds_bucket{instance="node-3",le="+Inf"}
+    values: 0+6000x840
+  - series: etcd_disk_wal_fsync_duration_seconds_bucket{instance="node-3",le="0.016"}
+    values: 0 6000+6000x359 2164800+4800x9 2214000+6000x9 2272800+4800x9 2322000+6000x9 2380800+4800x9 2430000+6000x9 2488800+4800x9
+      2538000+6000x9 2596800+4800x9 2646000+6000x9 2704800+4800x9 2754000+6000x9 2812800+4800x9 2862000+6000x9 2920800+4800x9
+      2970000+6000x9 3028800+4800x9 3078000+6000x9 3136800+4800x9 3186000+6000x9 3244800+4800x9 3294000+6000x9 3352800+4800x9
+      3402000+6000x9 3460800+4800x9 3510000+6000x9 3568800+4800x9 3618000+6000x9 3676800+4800x9 3726000+6000x9 3784800+4800x9
+      3834000+6000x9 3892800+4800x9 3942000+6000x9 4000800+4800x9 4050000+6000x9 4108800+4800x9 4158000+6000x9 4216800+4800x9
+      4266000+6000x9 4324800+4800x9 4374000+6000x9 4432800+4800x9 4482000+6000x9 4540800+4800x9 4590000+6000x9 4648800+4800x9
+      4698000+6000x9
+  - series: etcd_disk_wal_fsync_duration_seconds_bucket{instance="node-1",le="+Inf"}
+    values: 0+600000x840
+  - series: etcd_disk_wal_fsync_duration_seconds_bucket{instance="node-1",le="0.016"}
+    values: 0+600000x840
+  promql_expr_test:
+  - expr: ALERTS{alertname=~"EtcdWalFsync(Slow|Critical)",alertstate="firing"}
+    eval_time: 420m
+    exp_samples: []
+  - expr: ALERTS{alertname=~"EtcdWalFsync(Slow|Critical)",alertstate="firing"}
+    eval_time: 600m
+    exp_samples:
+    - labels: ALERTS{alertname="EtcdWalFsyncSlow",alertstate="firing",instance="node-3",severity="warning"}
+      value: 1
+    - labels: ALERTS{alertname="EtcdWalFsyncCritical",alertstate="firing",instance="node-3",severity="critical"}
+      value: 1
+  - expr: ALERTS{alertname=~"EtcdWalFsync(Slow|Critical)",alertstate="firing"}
+    eval_time: 610m
+    exp_samples:
+    - labels: ALERTS{alertname="EtcdWalFsyncSlow",alertstate="firing",instance="node-3",severity="warning"}
+      value: 1
+    - labels: ALERTS{alertname="EtcdWalFsyncCritical",alertstate="firing",instance="node-3",severity="critical"}
+      value: 1
+  - expr: ALERTS{alertname=~"EtcdWalFsync(Slow|Critical)",alertstate="firing"}
+    eval_time: 620m
+    exp_samples:
+    - labels: ALERTS{alertname="EtcdWalFsyncSlow",alertstate="firing",instance="node-3",severity="warning"}
+      value: 1
+    - labels: ALERTS{alertname="EtcdWalFsyncCritical",alertstate="firing",instance="node-3",severity="critical"}
+      value: 1
+  - expr: ALERTS{alertname=~"EtcdWalFsync(Slow|Critical)",alertstate="firing"}
+    eval_time: 720m
+    exp_samples:
+    - labels: ALERTS{alertname="EtcdWalFsyncSlow",alertstate="firing",instance="node-3",severity="warning"}
+      value: 1
+    - labels: ALERTS{alertname="EtcdWalFsyncCritical",alertstate="firing",instance="node-3",severity="critical"}
+      value: 1
+  - expr: ALERTS{alertname=~"EtcdWalFsync(Slow|Critical)",alertstate="firing"}
+    eval_time: 840m
+    exp_samples:
+    - labels: ALERTS{alertname="EtcdWalFsyncSlow",alertstate="firing",instance="node-3",severity="warning"}
+      value: 1
+    - labels: ALERTS{alertname="EtcdWalFsyncCritical",alertstate="firing",instance="node-3",severity="critical"}
+      value: 1
+- name: typical night 22:30 at 6 percent and 01:30 at 4 percent stays quiet
+  interval: 1m
+  input_series:
+  - series: etcd_disk_wal_fsync_duration_seconds_bucket{instance="node-3",le="+Inf"}
+    values: 0+6000x1020
+  - series: etcd_disk_wal_fsync_duration_seconds_bucket{instance="node-3",le="0.016"}
+    values: 0 5928+5928x359 2139720+5640x59 2478408+5928x119 3189600+5760x59 3535368+5928x419
+  - series: etcd_disk_wal_fsync_duration_seconds_bucket{instance="node-1",le="+Inf"}
+    values: 0+600000x1020
+  - series: etcd_disk_wal_fsync_duration_seconds_bucket{instance="node-1",le="0.016"}
+    values: 0+600000x1020
+  promql_expr_test:
+  - expr: ALERTS{alertname=~"EtcdWalFsync(Slow|Critical)",alertstate="firing"}
+    eval_time: 360m
+    exp_samples: []
+  - expr: ALERTS{alertname=~"EtcdWalFsync(Slow|Critical)",alertstate="firing"}
+    eval_time: 420m
+    exp_samples: []
+  - expr: ALERTS{alertname=~"EtcdWalFsync(Slow|Critical)",alertstate="firing"}
+    eval_time: 540m
+    exp_samples: []
+  - expr: ALERTS{alertname=~"EtcdWalFsync(Slow|Critical)",alertstate="firing"}
+    eval_time: 600m
+    exp_samples: []
+  - expr: ALERTS{alertname=~"EtcdWalFsync(Slow|Critical)",alertstate="firing"}
+    eval_time: 720m
+    exp_samples: []
+  - expr: ALERTS{alertname=~"EtcdWalFsync(Slow|Critical)",alertstate="firing"}
+    eval_time: 1020m
+    exp_samples: []
+  - expr: max_over_time(ALERTS{alertname=~"EtcdWalFsync(Slow|Critical)",alertstate="firing"}[1020m])
+    eval_time: 1020m
+    exp_samples: []
+- name: worst observed night model reaches 3.3 percent over 6h and stays quiet
+  interval: 1m
+  input_series:
+  - series: etcd_disk_wal_fsync_duration_seconds_bucket{instance="node-3",le="+Inf"}
+    values: 0+6000x1080
+  - series: etcd_disk_wal_fsync_duration_seconds_bucket{instance="node-3",le="0.016"}
+    values: 0 5928+5928x359 2139654+5574x59 2474406+5886x119 3180600+5760x59 3526326+5886x59 3879420+5820x59 4228728+5928x359
+  - series: etcd_disk_wal_fsync_duration_seconds_bucket{instance="node-1",le="+Inf"}
+    values: 0+600000x1080
+  - series: etcd_disk_wal_fsync_duration_seconds_bucket{instance="node-1",le="0.016"}
+    values: 0+600000x1080
+  promql_expr_test:
+  - expr: ALERTS{alertname=~"EtcdWalFsync(Slow|Critical)",alertstate="firing"}
+    eval_time: 360m
+    exp_samples: []
+  - expr: ALERTS{alertname=~"EtcdWalFsync(Slow|Critical)",alertstate="firing"}
+    eval_time: 420m
+    exp_samples: []
+  - expr: ALERTS{alertname=~"EtcdWalFsync(Slow|Critical)",alertstate="firing"}
+    eval_time: 540m
+    exp_samples: []
+  - expr: ALERTS{alertname=~"EtcdWalFsync(Slow|Critical)",alertstate="firing"}
+    eval_time: 600m
+    exp_samples: []
+  - expr: ALERTS{alertname=~"EtcdWalFsync(Slow|Critical)",alertstate="firing"}
+    eval_time: 719m
+    exp_samples: []
+  - expr: ALERTS{alertname=~"EtcdWalFsync(Slow|Critical)",alertstate="firing"}
+    eval_time: 720m
+    exp_samples: []
+  - expr: ALERTS{alertname=~"EtcdWalFsync(Slow|Critical)",alertstate="firing"}
+    eval_time: 780m
+    exp_samples: []
+  - expr: ALERTS{alertname=~"EtcdWalFsync(Slow|Critical)",alertstate="firing"}
+    eval_time: 1080m
+    exp_samples: []
+  - expr: max_over_time(ALERTS{alertname=~"EtcdWalFsync(Slow|Critical)",alertstate="firing"}[1080m])
+    eval_time: 1080m
+    exp_samples: []
+- name: sustained 4.5 percent warns only after 6h budget and 15m hold
+  interval: 1m
+  input_series:
+  - series: etcd_disk_wal_fsync_duration_seconds_bucket{instance="node-3",le="+Inf"}
+    values: 0+6000x840
+  - series: etcd_disk_wal_fsync_duration_seconds_bucket{instance="node-3",le="0.016"}
+    values: 0 5928+5928x359 2139810+5730x479
+  - series: etcd_disk_wal_fsync_duration_seconds_bucket{instance="node-1",le="+Inf"}
+    values: 0+600000x840
+  - series: etcd_disk_wal_fsync_duration_seconds_bucket{instance="node-1",le="0.016"}
+    values: 0+600000x840
+  promql_expr_test:
+  - expr: ALERTS{alertname=~"EtcdWalFsync(Slow|Critical)",alertstate="firing"}
+    eval_time: 360m
+    exp_samples: []
+  - expr: ALERTS{alertname=~"EtcdWalFsync(Slow|Critical)",alertstate="firing"}
+    eval_time: 420m
+    exp_samples: []
+  - expr: ALERTS{alertname=~"EtcdWalFsync(Slow|Critical)",alertstate="firing"}
+    eval_time: 664m
+    exp_samples: []
+  - expr: ALERTS{alertname=~"EtcdWalFsync(Slow|Critical)",alertstate="firing"}
+    eval_time: 665m
+    exp_samples: []
+  - expr: ALERTS{alertname=~"EtcdWalFsync(Slow|Critical)",alertstate="firing"}
+    eval_time: 679m
+    exp_samples: []
+  - expr: ALERTS{alertname=~"EtcdWalFsync(Slow|Critical)",alertstate="firing"}
+    eval_time: 680m
+    exp_samples:
+    - labels: ALERTS{alertname="EtcdWalFsyncSlow",alertstate="firing",instance="node-3",severity="warning"}
+      value: 1
+  - expr: ALERTS{alertname=~"EtcdWalFsync(Slow|Critical)",alertstate="firing"}
+    eval_time: 720m
+    exp_samples:
+    - labels: ALERTS{alertname="EtcdWalFsyncSlow",alertstate="firing",instance="node-3",severity="warning"}
+      value: 1
+  - expr: ALERTS{alertname=~"EtcdWalFsync(Slow|Critical)",alertstate="firing"}
+    eval_time: 840m
+    exp_samples:
+    - labels: ALERTS{alertname="EtcdWalFsyncSlow",alertstate="firing",instance="node-3",severity="warning"}
+      value: 1
+  - expr: ALERTS{alertname="EtcdWalFsyncSlow",alertstate="pending"}
+    eval_time: 679m
+    exp_samples:
+    - labels: ALERTS{alertname="EtcdWalFsyncSlow",alertstate="pending",instance="node-3",severity="warning"}
+      value: 1
+- name: clearly bad 2h night at 10 percent warns with 6h below page budget
+  interval: 1m
+  input_series:
+  - series: etcd_disk_wal_fsync_duration_seconds_bucket{instance="node-3",le="+Inf"}
+    values: 0+6000x900
+  - series: etcd_disk_wal_fsync_duration_seconds_bucket{instance="node-3",le="0.016"}
+    values: 0 5928+5928x359 2139480+5400x119 2788008+5928x419
+  - series: etcd_disk_wal_fsync_duration_seconds_bucket{instance="node-1",le="+Inf"}
+    values: 0+600000x900
+  - series: etcd_disk_wal_fsync_duration_seconds_bucket{instance="node-1",le="0.016"}
+    values: 0+600000x900
+  promql_expr_test:
+  - expr: ALERTS{alertname=~"EtcdWalFsync(Slow|Critical)",alertstate="firing"}
+    eval_time: 360m
+    exp_samples: []
+  - expr: ALERTS{alertname=~"EtcdWalFsync(Slow|Critical)",alertstate="firing"}
+    eval_time: 474m
+    exp_samples: []
+  - expr: ALERTS{alertname=~"EtcdWalFsync(Slow|Critical)",alertstate="firing"}
+    eval_time: 475m
+    exp_samples: []
+  - expr: ALERTS{alertname=~"EtcdWalFsync(Slow|Critical)",alertstate="firing"}
+    eval_time: 489m
+    exp_samples: []
+  - expr: ALERTS{alertname=~"EtcdWalFsync(Slow|Critical)",alertstate="firing"}
+    eval_time: 490m
+    exp_samples:
+    - labels: ALERTS{alertname="EtcdWalFsyncSlow",alertstate="firing",instance="node-3",severity="warning"}
+      value: 1
+  - expr: ALERTS{alertname=~"EtcdWalFsync(Slow|Critical)",alertstate="firing"}
+    eval_time: 540m
+    exp_samples:
+    - labels: ALERTS{alertname="EtcdWalFsyncSlow",alertstate="firing",instance="node-3",severity="warning"}
+      value: 1
+  - expr: ALERTS{alertname=~"EtcdWalFsync(Slow|Critical)",alertstate="firing"}
+    eval_time: 600m
+    exp_samples:
+    - labels: ALERTS{alertname="EtcdWalFsyncSlow",alertstate="firing",instance="node-3",severity="warning"}
+      value: 1
+  - expr: ALERTS{alertname=~"EtcdWalFsync(Slow|Critical)",alertstate="firing"}
+    eval_time: 720m
+    exp_samples:
+    - labels: ALERTS{alertname="EtcdWalFsyncSlow",alertstate="firing",instance="node-3",severity="warning"}
+      value: 1
+  - expr: ALERTS{alertname=~"EtcdWalFsync(Slow|Critical)",alertstate="firing"}
+    eval_time: 900m
+    exp_samples: []
+  - expr: max_over_time(ALERTS{alertname="EtcdWalFsyncCritical",alertstate="firing"}[900m])
+    eval_time: 900m
+    exp_samples: []
+- name: backend commit retains 30m hold and clears after recovery
+  interval: 1m
+  input_series:
+  - series: etcd_disk_wal_fsync_duration_seconds_bucket{instance="node-3",le="+Inf"}
+    values: 0+6000x60
+  - series: etcd_disk_wal_fsync_duration_seconds_bucket{instance="node-3",le="0.016"}
+    values: 0 6000+6000x59
+  - series: etcd_disk_wal_fsync_duration_seconds_bucket{instance="node-1",le="+Inf"}
+    values: 0+600000x60
+  - series: etcd_disk_wal_fsync_duration_seconds_bucket{instance="node-1",le="0.016"}
+    values: 0+600000x60
+  - series: etcd_disk_backend_commit_duration_seconds_bucket{instance="node-3",le="0.12"}
+    values: 0+5400x40 222000+6000x19
+  - series: etcd_disk_backend_commit_duration_seconds_bucket{instance="node-3",le="0.2"}
+    values: 0+6000x60
+  - series: etcd_disk_backend_commit_duration_seconds_bucket{instance="node-3",le="+Inf"}
+    values: 0+6000x60
+  promql_expr_test:
+  - expr: ALERTS{alertname="EtcdBackendCommitSlow",alertstate="firing"}
+    eval_time: 1m
+    exp_samples: []
+  - expr: ALERTS{alertname="EtcdBackendCommitSlow",alertstate="firing"}
+    eval_time: 30m
+    exp_samples: []
+  - expr: ALERTS{alertname="EtcdBackendCommitSlow",alertstate="firing"}
+    eval_time: 31m
+    exp_samples:
+    - labels: ALERTS{alertname="EtcdBackendCommitSlow",alertstate="firing",instance="node-3",severity="warning"}
+      value: 1
+  - expr: ALERTS{alertname="EtcdBackendCommitSlow",alertstate="firing"}
+    eval_time: 40m
+    exp_samples:
+    - labels: ALERTS{alertname="EtcdBackendCommitSlow",alertstate="firing",instance="node-3",severity="warning"}
+      value: 1
+  - expr: ALERTS{alertname="EtcdBackendCommitSlow",alertstate="firing"}
+    eval_time: 45m
+    exp_samples: []
+  - expr: ALERTS{alertname="EtcdBackendCommitSlow",alertstate="firing"}
+    eval_time: 60m
+    exp_samples: []
+  - expr: max_over_time(ALERTS{alertname=~"EtcdWalFsync(Slow|Critical)",alertstate="firing"}[60m])
+    eval_time: 60m
+    exp_samples: []
+- name: missing metrics fires at 15m and clears when scraping recovers
+  interval: 1m
+  input_series:
+  - series: etcd_disk_wal_fsync_duration_seconds_bucket{instance="node-3",le="+Inf"}
+    values: _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 0+6000x20
+  - series: etcd_disk_wal_fsync_duration_seconds_bucket{instance="node-3",le="0.016"}
+    values: _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 0+6000x20
+  promql_expr_test:
+  - expr: ALERTS{alertname="EtcdMetricsMissing",alertstate="firing"}
+    eval_time: 14m
+    exp_samples: []
+  - expr: ALERTS{alertname="EtcdMetricsMissing",alertstate="firing"}
+    eval_time: 15m
+    exp_samples:
+    - labels: ALERTS{alertname="EtcdMetricsMissing",alertstate="firing",severity="warning"}
+      value: 1
+  - expr: ALERTS{alertname="EtcdMetricsMissing",alertstate="firing"}
+    eval_time: 19m
+    exp_samples:
+    - labels: ALERTS{alertname="EtcdMetricsMissing",alertstate="firing",severity="warning"}
+      value: 1
+  - expr: ALERTS{alertname="EtcdMetricsMissing",alertstate="firing"}
+    eval_time: 20m
+    exp_samples: []
+  - expr: ALERTS{alertname="EtcdMetricsMissing",alertstate="firing"}
+    eval_time: 40m
+    exp_samples: []
+  - expr: max_over_time(ALERTS{alertname=~"EtcdWalFsync(Slow|Critical)",alertstate="firing"}[40m])
+    eval_time: 40m
+    exp_samples: []

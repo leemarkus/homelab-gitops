@@ -1,0 +1,57 @@
+---
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: argocd-platform-sync
+  namespace: monitoring
+  labels:
+    release: kube-prometheus-stack
+    app.kubernetes.io/name: argocd-platform-sync
+spec:
+  groups:
+    - name: argocd.platform-sync
+      rules:
+        - alert: ArgoCDPlatformSyncFailed
+          expr: |
+            increase(argocd_app_sync_total{project="default",phase=~"Failed|Error"}[30m]) > 0
+            or
+            (
+              argocd_app_sync_total{project="default",phase=~"Failed|Error"} > 0
+              unless
+              argocd_app_sync_total{project="default",phase=~"Failed|Error"} offset 30m
+            )
+          labels:
+            severity: critical
+          annotations:
+            summary: "ArgoCD platform sync FAILED on {{ $labels.name }}"
+            description: >-
+              {{ $labels.name }} logged a failed sync in the last 30m. Auto-sync
+              will NOT retry an unchanged revision, so the desired state may now
+              be in git and not in the cluster with no further signal. Check
+              `argocd --core app get {{ $labels.name }}` and force a sync.
+        - alert: ArgoCDPlatformOutOfSyncStuck
+          expr: |
+            argocd_app_info{project="default",sync_status="OutOfSync",name!~"kyverno|loki|longhorn"} == 1
+          for: 1h
+          labels:
+            severity: warning
+          annotations:
+            summary: "ArgoCD platform app {{ $labels.name }} OutOfSync >1h"
+            description: >-
+              {{ $labels.name }} has been OutOfSync for over an hour. Either the
+              sync is failing (see ArgoCDPlatformSyncFailed) or a live-only field
+              is drifting — diagnose with `argocd --core app diff {{ $labels.name }}`
+              before adding it to the exclusion list in this file.
+        - alert: ArgoCDBenignDriftResolved
+          expr: |
+            argocd_app_info{project="default",sync_status="Synced",name=~"kyverno|loki|longhorn"} == 1
+          for: 24h
+          labels:
+            severity: info
+          annotations:
+            summary: "{{ $labels.name }} no longer drifts — drop it from the exclusion list"
+            description: >-
+              {{ $labels.name }} is excluded from ArgoCDPlatformOutOfSyncStuck
+              because it drifted permanently, and it has now been Synced for 24h.
+              Remove it from the `name!~` clause in
+              config/argocd-platform-sync-alerts.yaml so the app is watched again.

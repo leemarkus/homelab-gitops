@@ -1,0 +1,33 @@
+apiVersion: v1
+kind: ResourceQuota
+metadata:
+  name: ci-quota
+  namespace: ci
+  labels:
+    app.kubernetes.io/name: ci-quota
+    app.kubernetes.io/part-of: homelab
+spec:
+  hard:
+    requests.cpu: "4"
+    requests.memory: 8Gi
+    limits.memory: 16Gi
+    pods: "10"
+    persistentvolumeclaims: "4"
+    requests.storage: 60Gi
+---
+apiVersion: v1
+kind: LimitRange
+metadata:
+  name: ci-container-limits
+  namespace: ci
+  labels:
+    app.kubernetes.io/name: ci-container-limits
+    app.kubernetes.io/part-of: homelab
+spec:
+  limits:
+    - type: Container
+      default:
+        memory: 512Mi
+      defaultRequest:
+        cpu: 50m
+        memory: 128Mi

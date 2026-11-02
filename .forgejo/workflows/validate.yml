@@ -1,0 +1,416 @@
+# Manifest validation and the promotion boundary.
+#
+# Argo CD tracks the `deploy` branch, not `main`. Every job below validates the
+# pushed commit; the `promote` job at the bottom fast-forwards `deploy` to
+# `main` only when all seven pass. A red build leaves `deploy` where it is, so
+# last-known-good stays on the cluster and the rejected commit is never applied.
+# See docs/adr/0003-promotion-boundary.md.
+#
+# Runs on a Forgejo Actions runner (host executor, no container runtime, no
+# cluster credentials) with yamllint, kubeconform, kustomize, kyverno, trivy and
+# helm preinstalled on its persistent volume; see
+# clusters/homelab/forgejo-runner/statefulset.yaml.
+name: validate-manifests
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  yamllint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: yamllint
+        run: |
+          find . -type f \( -name "*.yaml" -o -name "*.yml" \) -not -path "./.git/*" \
+            | xargs yamllint -c .yamllint.yaml
+
+  kubeconform:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: kubeconform on cluster manifests
+        run: |
+          # Helm values are chart inputs and kustomization.yaml files are build
+          # instructions; rendered overlays are checked in kustomize-overlays.
+          find clusters/homelab -type f -name "*.yaml" \
+            -not -path "*/values/*" \
+            -not -path "*/tenants/*/base/observe/tests/*" \
+            -not -name "kustomization.yaml" \
+            | sort > /tmp/manifests.txt
+          echo "validating $(wc -l < /tmp/manifests.txt) manifests"
+          # Skipped kinds are CRDs whose schemas kubeconform cannot resolve offline.
+          xargs -a /tmp/manifests.txt kubeconform \
+            -strict \
+            -kubernetes-version 1.34.12 \
+            -skip CustomResourceDefinition,Application,ApplicationSet,AppProject,PolicyException,Certificate,ClusterIssuer,Issuer,PrometheusRule,ServiceMonitor,PodMonitor,Prometheus,Alertmanager,ScrapeConfig,CiliumLoadBalancerIPPool,CiliumL2AnnouncementPolicy,CiliumNetworkPolicy,ClusterPolicy,Policy,SealedSecret,Backup,RecurringJob,Schedule,Plan \
+            -summary
+
+      - name: every PrometheusRule carries the label that makes it load
+        run: |
+          # Prometheus selects rules by `release: kube-prometheus-stack`. A
+          # PrometheusRule without it applies cleanly and is never evaluated,
+          # and kubeconform skips the kind, so nothing else would notice.
+          # Split per document first so a label on a different document in the
+          # same file cannot satisfy the check.
+          fail=0
+          for f in $(grep -rl "kind: PrometheusRule" clusters/homelab --include="*.yaml"); do
+            csplit -s -z -f /tmp/pr_ -b "%03d.yaml" "$f" '/^---$/' '{*}' 2>/dev/null || cp "$f" /tmp/pr_000.yaml
+            for d in /tmp/pr_*.yaml; do
+              if grep -q "^kind: PrometheusRule" "$d"; then
+                if ! grep -qE "^[[:space:]]+release:[[:space:]]+kube-prometheus-stack([[:space:]]*#.*)?[[:space:]]*$" "$d"; then
+                  name=$(grep -m1 "^  name:" "$d" | awk '{print $2}')
+                  echo "FAIL $f (PrometheusRule ${name:-?}) has no 'release: kube-prometheus-stack' label"
+                  fail=1
+                fi
+              fi
+            done
+            rm -f /tmp/pr_*.yaml
+          done
+          [ "$fail" -eq 0 ] && echo "OK  every PrometheusRule is selectable by Prometheus"
+          exit $fail
+
+  kustomize-overlays:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: build every overlay and schema-check the output
+        run: |
+          # CI-authored image bumps land in overlay kustomization.yaml files and
+          # are validated exactly like human commits.
+          set -e
+          while IFS= read -r kfile; do
+            dir=$(dirname "$kfile")
+            echo "[+] kustomize build $dir"
+            kustomize build "$dir" \
+              | kubeconform \
+                  -strict \
+                  -kubernetes-version 1.34.12 \
+                  -skip CustomResourceDefinition,Application,ApplicationSet,AppProject,PolicyException,Certificate,ClusterIssuer,Issuer,PrometheusRule,ServiceMonitor,PodMonitor,Prometheus,Alertmanager,CiliumLoadBalancerIPPool,CiliumL2AnnouncementPolicy,CiliumNetworkPolicy,ClusterPolicy,Policy,SealedSecret,Backup,RecurringJob,Schedule,Plan \
+                  -summary
+          done < <(find clusters/homelab -path "*/overlays/*" -name kustomization.yaml | sort)
+
+  sealed-secret-check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: no plaintext Secrets under the cluster path
+        run: |
+          set -e
+          fail=0
+          while IFS= read -r f; do
+            if grep -qE "^kind:[[:space:]]*Secret[[:space:]]*$" "$f"; then
+              echo "FAIL: $f declares a plaintext Secret; seal it with kubeseal"
+              fail=1
+            fi
+          done < <(find clusters/homelab -type f -name "*.yaml")
+          while IFS= read -r f; do
+            if ! grep -q "encryptedData" "$f"; then
+              echo "FAIL: $f is named like a SealedSecret but has no encryptedData"
+              fail=1
+            fi
+          done < <(find clusters/homelab -type f -name "sealed-secret-*.yaml")
+          [ $fail -eq 0 ] || exit 1
+          echo "[+] no plaintext Secrets; all sealed files carry ciphertext"
+
+  kyverno-admission:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: would these manifests admit under Enforce?
+        run: |
+          # `kyverno apply` needs no cluster. It answers whether each resource
+          # would be REJECTED if config/kyverno-policies.yaml enforced it.
+          # Blocking: any failure fails the job. Set ADVISORY=1 only for a
+          # deliberate, time-boxed exception.
+          set -e
+          ADVISORY=0
+          POLICY=clusters/homelab/config/kyverno-policies.yaml
+
+          # Raw manifests, minus Helm values and the kustomize trees: a base has
+          # no image tag because its overlay supplies one, so bases are judged
+          # on their rendered output below.
+          find clusters/homelab -type f -name "*.yaml" \
+            -not -path "*/values/*" \
+            -not -path "*/tenants/*" \
+            -not -name "kustomization.yaml" > /tmp/kres.txt
+          ARGS=""
+          while IFS= read -r f; do ARGS="$ARGS --resource $f"; done < /tmp/kres.txt
+
+          echo "=== raw manifests ==="
+          kyverno apply "$POLICY" $ARGS | tee /tmp/kyv-raw.txt
+
+          echo "=== rendered kustomize overlays ==="
+          : > /tmp/kyv-rendered.txt
+          while IFS= read -r kfile; do
+            o=$(dirname "$kfile")
+            echo "--- $o"
+            # kustomize, not kubectl: the runner has no kubectl and no cluster
+            # credentials by design.
+            kustomize build "$o" > /tmp/rendered.yaml
+            kyverno apply "$POLICY" --resource /tmp/rendered.yaml | tee -a /tmp/kyv-rendered.txt
+          done < <(find clusters/homelab -path "*/overlays/*" -name kustomization.yaml | sort)
+
+          FAILED=$(grep -ho "fail: [0-9]*" /tmp/kyv-raw.txt /tmp/kyv-rendered.txt \
+                   | awk '{s+=$2} END {print s+0}')
+          echo "[=] total policy failures: $FAILED"
+          if [ "$FAILED" -gt 0 ] && [ "$ADVISORY" = "1" ]; then
+            echo "[!] ADVISORY MODE: $FAILED violation(s) would be rejected under Enforce."
+            exit 0
+          fi
+          [ "$FAILED" -eq 0 ] || exit 1
+          echo "[+] every manifest would admit under Enforce"
+
+  trivy:
+    runs-on: ubuntu-latest
+    # The vulnerability DB is cached on the runner's persistent volume (/data),
+    # so it is pulled once per upstream TTL rather than once per run, without
+    # suppressing updates.
+    env:
+      TRIVY_CACHE_DIR: /data/trivy-cache
+      # Run-scoped: the host executor shares /tmp between concurrent jobs.
+      TRIVY_JSON_DIR: /tmp/trivy-json-${{ github.run_id }}
+      TRIVY_SARIF_DIR: /tmp/trivy-sarif-${{ github.run_id }}
+      TRIVY_IMAGES_FILE: /tmp/images-${{ github.run_id }}.txt
+      TRIVY_GATE_FILE: /tmp/trivy-gate-${{ github.run_id }}.txt
+      # The diff base: a PR compares with its merge-base, a push with the
+      # commit it replaced. Missing or unreadable means gate every image.
+      EVENT_NAME: ${{ github.event_name }}
+      PR_BASE_REF: ${{ github.base_ref }}
+      PR_BASE_SHA: ${{ github.event.pull_request.base.sha }}
+      PUSH_BEFORE: ${{ github.event.before }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: trivy config (IaC) and CVEs of changed images against their baseline
+        run: |
+          # "Fail on any fixable HIGH/CRITICAL" would mean a permanently red
+          # pipeline on upstream images, so each image is gated against its own
+          # measured baseline in .forgejo/trivy-baseline (zero for clean
+          # images). Only images this diff changes are gated, so a CVE published
+          # against an untouched digest cannot hold promotion for unrelated work.
+          set -e
+          . .forgejo/scripts/trivy-lib.sh
+          trivy_baseline_check "$TRIVY_BASELINE_FILE"
+
+          rm -rf "$TRIVY_JSON_DIR" "$TRIVY_SARIF_DIR"
+          mkdir -p "$TRIVY_JSON_DIR" "$TRIVY_SARIF_DIR"
+          # Two concurrent jobs share the boltdb cache; serialise on a lock.
+          trivy_lock
+
+          echo "=== trivy config (advisory for platform manifests) ==="
+          trivy config clusters/homelab --severity HIGH,CRITICAL --exit-code 0 || true
+          trivy config clusters/homelab --severity HIGH,CRITICAL --exit-code 0 \
+            --format sarif --output "$TRIVY_SARIF_DIR/config.sarif" || true
+
+          # Tenant IaC has no inherited platform allowance: blocking.
+          tenant_scan_dir=$(mktemp -d)
+          trap 'rm -rf "$tenant_scan_dir"' EXIT
+          if [ -d clusters/homelab/tenants ]; then
+            while IFS= read -r kfile; do
+              kustomize build "$(dirname "$kfile")" > "$tenant_scan_dir/rendered.yaml"
+              trivy config "$tenant_scan_dir" --severity HIGH,CRITICAL --exit-code 1
+            done < <(find clusters/homelab/tenants -path "*/overlays/*" -name kustomization.yaml | sort)
+          fi
+
+          echo "=== trivy image (gated: images this diff changes) ==="
+          base_rev=""
+          case "$EVENT_NAME" in
+            pull_request)
+              base_rev=$(git merge-base HEAD "origin/$PR_BASE_REF" 2>/dev/null) \
+                || base_rev=$(git merge-base HEAD "$PR_BASE_SHA" 2>/dev/null) \
+                || base_rev="" ;;
+            push)
+              # An all-zero `before` is a branch creation: there is no base.
+              if [ -n "$PUSH_BEFORE" ] && [ -n "${PUSH_BEFORE##*[!0]*}" ]; then :
+              elif [ -n "$PUSH_BEFORE" ] && git cat-file -e "$PUSH_BEFORE^{commit}" 2>/dev/null; then
+                base_rev=$PUSH_BEFORE
+              fi ;;
+          esac
+          trivy_images_in . > "$TRIVY_IMAGES_FILE"
+          if [ -n "$base_rev" ] && trivy_gate_set "$base_rev" > "$TRIVY_GATE_FILE"; then
+            echo "[i] diff base: $base_rev ($EVENT_NAME)"
+          else
+            # Fail safe: with no usable base, gate everything.
+            echo "[!] no usable diff base; gating EVERY image"
+            awk '{ printf "%s\tno diff base: full scan\n", $0 }' "$TRIVY_IMAGES_FILE" > "$TRIVY_GATE_FILE"
+          fi
+          echo "[i] $(wc -l < "$TRIVY_GATE_FILE" | tr -d ' ') of $(wc -l < "$TRIVY_IMAGES_FILE" | tr -d ' ') pinned image reference(s) gated"
+
+          fail=0
+          while IFS="$(printf '\t')" read -r img why; do
+            skip=$(trivy_skip_reason "$img")
+            if [ -n "$skip" ]; then
+              echo "[-] skip $img: $skip"
+              continue
+            fi
+            if ! n=$(trivy_count "$img"); then
+              echo "FAIL $img: scan failed ($why)"
+              fail=1
+              continue
+            fi
+            base=$(trivy_baseline_for "$img" "$TRIVY_BASELINE_FILE")
+            if [ -z "$base" ]; then
+              echo "FAIL $img: $n fixable HIGH/CRITICAL and NO BASELINE ($why). Register it in $TRIVY_BASELINE_FILE first."
+              fail=1
+              continue
+            fi
+            if [ "$n" -gt "$base" ]; then
+              echo "FAIL $img: $n fixable HIGH/CRITICAL, baseline $base ($why)."
+              fail=1
+            elif [ "$n" -lt "$base" ]; then
+              echo "OK   $img: $n (baseline $base; $why). Lower the baseline to $n."
+            else
+              echo "OK   $img: $n (at baseline; $why)"
+            fi
+          done < "$TRIVY_GATE_FILE"
+
+          [ "$fail" -eq 0 ] || exit 1
+          echo "[+] no image this diff changes exceeds its baseline"
+
+      # The red run is the one whose SARIF matters, hence always(). The upload
+      # may fail without failing the job: publishing a report must never veto a
+      # deploy whose manifests are fine. upload-artifact v3, because the runner
+      # implements the v3 artifact API.
+      - name: upload trivy SARIF reports
+        if: always()
+        continue-on-error: true
+        uses: actions/upload-artifact@v3
+        with:
+          name: trivy-sarif
+          path: ${{ env.TRIVY_SARIF_DIR }}/
+          if-no-files-found: warn
+          retention-days: 30
+
+  helm-template:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: helm template every chart-backed Application
+        run: |
+          # Every (chart, version, repo, values file) is read from the
+          # Application Argo CD actually reconciles, so a chart bump is templated
+          # against the version that will really be installed. No second list to
+          # keep in step.
+          set -e
+          for f in clusters/homelab/apps/*.yaml; do
+            awk '
+              { line=$0; sub(/^[[:space:]]*-?[[:space:]]*/,"",line) }
+              line ~ /^repoURL:/  { split(line,a,": "); r=a[2] }
+              line ~ /^chart:/    { split(line,a,": "); c=a[2]; cr=r; want=1; next }
+              want && line ~ /^targetRevision:/ { split(line,a,": "); ver=a[2]; want=0 }
+              /\$values\// { vf=$0; sub(/.*\$values\//,"",vf) }
+              END { if (c!="") print c"|"ver"|"cr"|"vf }' "$f"
+          done | sort > /tmp/charts.txt
+
+          # A parse that silently drops an app would template nothing, so the
+          # count is asserted. Update it when a chart-backed Application changes.
+          want_n=9
+          got_n=$(wc -l < /tmp/charts.txt | tr -d "[:space:]")
+          echo "[i] discovered $got_n chart-backed apps:"
+          cat /tmp/charts.txt
+          if [ "$got_n" -ne "$want_n" ]; then
+            echo "FAIL: expected $want_n chart-backed apps, parsed $got_n."
+            exit 1
+          fi
+
+          while IFS='|' read -r chart ver repo vf; do
+            case "$chart|$ver|$repo" in
+              *"||"*|"|"*) echo "FAIL: incomplete triple for '$chart'"; exit 1 ;;
+            esac
+            echo "[+] $chart $ver ($repo)"
+            if [ -n "$vf" ] && [ -f "$vf" ]; then
+              helm template "$chart" "$chart" --repo "$repo" --version "$ver" \
+                -f "$vf" --skip-tests > /dev/null
+            else
+              helm template "$chart" "$chart" --repo "$repo" --version "$ver" \
+                --skip-tests > /dev/null
+            fi
+          done < /tmp/charts.txt
+          echo "[+] helm templates resolved cleanly"
+
+  # THE PROMOTION BOUNDARY. `needs` names every check: a job added above but
+  # not listed here would run outside the gate.
+  promote:
+    runs-on: ubuntu-latest
+    needs: [yamllint, kubeconform, kustomize-overlays, sealed-secret-check, kyverno-admission, trivy, helm-template]
+    # Pushes to main only; promoting an unmerged PR would invert the gate.
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - name: fast-forward deploy to main
+        env:
+          GIT_HOST: git.example.com
+          REPO: platform/gitops
+          PROMOTE_TOKEN: ${{ secrets.PROMOTE_TOKEN }}
+          # Forgejo takes a token over HTTP basic auth as username:token with a
+          # real username. Set PROMOTE_USER when the token belongs to a bot.
+          PROMOTE_USER: ${{ secrets.PROMOTE_USER }}
+        run: |
+          set -e
+          if [ -z "${PROMOTE_TOKEN:-}" ]; then
+            echo "FAIL: repo secret PROMOTE_TOKEN is not set. Nothing is promoted;"
+            echo "      the cluster stays on whatever deploy points at."
+            exit 1
+          fi
+          USER="${PROMOTE_USER:-platform}"
+          enc() { printf '%s' "$1" | sed -e 's|%|%25|g' -e 's|@|%40|g' -e 's|/|%2F|g' -e 's|:|%3A|g'; }
+          git remote set-url origin \
+            "https://$(enc "$USER"):$(enc "$PROMOTE_TOKEN")@$GIT_HOST/$REPO.git"
+
+          # Prove the token can push before using it. A git read proves nothing
+          # (the repo is anonymously readable), and /user needs a scope this
+          # token does not require. GET /repos/{owner}/{repo} returns the
+          # caller's own permissions with repository scope alone.
+          probe=$(python3 - <<'PY' 2>/dev/null
+          import json, os, urllib.request, urllib.error
+          req = urllib.request.Request(
+              "https://%s/api/v1/repos/%s" % (os.environ["GIT_HOST"], os.environ["REPO"]),
+              headers={"Authorization": "token " + os.environ["PROMOTE_TOKEN"]})
+          try:
+              with urllib.request.urlopen(req, timeout=20) as r:
+                  p = json.load(r).get("permissions") or {}
+                  print("PUSH_OK" if p.get("push") else "NO_PUSH")
+          except urllib.error.HTTPError as e:
+              print("HTTP_%d" % e.code)
+          except Exception as e:
+              print("ERR_%s" % type(e).__name__)
+          PY
+          )
+          # Fail closed on anything but PUSH_OK. Not promoting is always safe;
+          # the next green run promotes every pending commit.
+          case "$probe" in
+            PUSH_OK) echo "[+] token authenticates and has push on $REPO" ;;
+            NO_PUSH) echo "FAIL: token has no push permission on $REPO."; exit 1 ;;
+            HTTP_401) echo "FAIL: PROMOTE_TOKEN is invalid, revoked or expired."; exit 1 ;;
+            *) echo "FAIL: could not verify PROMOTE_TOKEN (${probe:-no response})."; exit 1 ;;
+          esac
+
+          SHA=$(git rev-parse HEAD)
+          if git ls-remote --exit-code --heads origin deploy >/dev/null 2>&1; then
+            git fetch origin deploy
+            BEHIND=$(git rev-list --count origin/deploy..HEAD)
+            AHEAD=$(git rev-list --count HEAD..origin/deploy)
+            echo "[i] deploy is $BEHIND commit(s) behind main, $AHEAD ahead"
+            if [ "$AHEAD" -ne 0 ]; then
+              echo "FAIL: deploy has $AHEAD commit(s) that main does not."
+              echo "      Promotion is fast-forward only and is never forced."
+              exit 1
+            fi
+            if [ "$BEHIND" -eq 0 ]; then
+              echo "[+] deploy already at $SHA"
+              exit 0
+            fi
+          else
+            echo "[i] deploy does not exist yet; creating it at $SHA"
+          fi
+          # No --force, ever: a non-fast-forward is rejected by the server.
+          git push origin "HEAD:refs/heads/deploy"
+          echo "[+] promoted deploy -> $SHA"

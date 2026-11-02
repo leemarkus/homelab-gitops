@@ -1,0 +1,130 @@
+# Probes the off-cluster Git server every 10 minutes: health endpoint, API
+# version, and that the `deploy` ref is readable. Argo CD, CI and the registry
+# all depend on it, so its loss is a critical alert.
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: forgejo-availability-check
+  namespace: monitoring
+  labels:
+    app.kubernetes.io/name: forgejo-availability-check
+spec:
+  schedule: "*/10 * * * *"
+  timeZone: "Etc/UTC"
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 1
+  failedJobsHistoryLimit: 3
+  jobTemplate:
+    spec:
+      backoffLimit: 1
+      activeDeadlineSeconds: 180
+      template:
+        metadata:
+          labels:
+            app.kubernetes.io/name: forgejo-availability-check
+        spec:
+          restartPolicy: Never
+          securityContext:
+            runAsNonRoot: true
+            runAsUser: 65532
+            runAsGroup: 65532
+            seccompProfile:
+              type: RuntimeDefault
+          containers:
+            - name: check
+              image: alpine:3.22
+              imagePullPolicy: IfNotPresent
+              command: ["/bin/sh", "-c"]
+              args:
+                - |
+                  set -u
+                  URL=https://git.example.com
+                  fail=0
+
+                  if wget -q -T 15 -O /dev/null "$URL/api/healthz"; then
+                    echo "OK   healthz"
+                  else
+                    echo "FAIL healthz did not answer"
+                    fail=1
+                  fi
+
+                  ver=$(wget -q -T 15 -O - "$URL/api/v1/version" 2>/dev/null \
+                        | sed -n 's/.*"version":"\([^"]*\)".*/\1/p')
+                  if [ -n "$ver" ]; then
+                    echo "OK   version $ver"
+                  else
+                    echo "FAIL no version from the API — the reverse proxy may be serving its own page"
+                    fail=1
+                  fi
+
+                  sha=$(wget -q -T 15 -O - "$URL/api/v1/repos/platform/gitops/branches/deploy" 2>/dev/null \
+                        | sed -n 's/.*"id":"\([0-9a-f]\{40\}\)".*/\1/p' | head -1)
+                  if [ -n "$sha" ]; then
+                    echo "OK   deploy ref readable ($(echo "$sha" | cut -c1-8))"
+                  else
+                    echo "FAIL cannot read the deploy ref — the UI may be up while git is not"
+                    fail=1
+                  fi
+
+                  exit $fail
+              securityContext:
+                allowPrivilegeEscalation: false
+                capabilities:
+                  drop: ["ALL"]
+              resources:
+                requests: { cpu: 10m, memory: 32Mi }
+                limits: { cpu: 200m, memory: 128Mi }
+---
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: forgejo-availability
+  namespace: monitoring
+  labels:
+    release: kube-prometheus-stack
+    app.kubernetes.io/name: forgejo-availability-check
+spec:
+  groups:
+    - name: forgejo-availability
+      rules:
+        - alert: ForgejoDown
+          expr: |-
+            max(
+              (kube_job_status_failed{namespace="monitoring", job_name=~"forgejo-availability-check-.*"} > 0)
+              and on (namespace, job_name)
+              (
+                kube_job_status_start_time{namespace="monitoring", job_name=~"forgejo-availability-check-.*"}
+                ==
+                scalar(
+                  max(
+                    kube_job_status_start_time{namespace="monitoring", job_name=~"forgejo-availability-check-.*"}
+                    and on (namespace, job_name)
+                    (kube_job_status_active{namespace="monitoring", job_name=~"forgejo-availability-check-.*"} == 0)
+                  )
+                )
+              )
+            ) > 0
+          for: 15m
+          labels:
+            severity: critical
+          annotations:
+            summary: "Forgejo is unreachable — git, CI, the registry and SSO are all down"
+            description: >-
+              forgejo-availability-check has failed its two most recent runs
+              against https://git.example.com. Forgejo runs off-cluster on its own VM,
+              reached through a reverse proxy. This one host carries git, the OCI registry, CI and
+              the OIDC provider for ArgoCD and Grafana — so ArgoCD cannot fetch
+              desired state, CI cannot run, image pulls fail and SSO logins stop.
+              Check the Job logs for which of healthz / version / git ls-remote
+              failed; each points somewhere different (app, proxy, git).
+        - alert: ForgejoAvailabilityCheckNotRunning
+          expr: absent(kube_job_status_start_time{namespace="monitoring", job_name=~"forgejo-availability-check-.*"})
+          for: 45m
+          labels:
+            severity: warning
+          annotations:
+            summary: "The Forgejo availability check has stopped running"
+            description: >-
+              No forgejo-availability-check Job has started in 45m (schedule is
+              */10). While it is down, nothing is watching the host that git, CI,
+              the registry and SSO all depend on.

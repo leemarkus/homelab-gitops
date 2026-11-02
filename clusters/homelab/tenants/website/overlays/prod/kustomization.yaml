@@ -1,0 +1,20 @@
+# Prod overlay. Promotion copies the digest accepted in dev; prod sync is manual.
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+namespace: website-prod
+resources:
+- ../../base
+- ../../base/observe/prod
+- ingress.yaml
+labels:
+- includeTemplates: true
+  pairs:
+    golden-path/environment: prod
+    golden-path/tenant: website
+images:
+- name: registry.example.com/apps/website
+  newName: registry.example.com/apps/website
+  newTag: UNRELEASED
+replicas:
+- count: 2
+  name: website

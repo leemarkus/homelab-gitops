@@ -1,0 +1,147 @@
+prometheus:
+  podDisruptionBudget:
+    enabled: true
+    minAvailable: null
+    maxUnavailable: 1
+  prometheusSpec:
+    retention: 7d
+    replicas: 1
+    priorityClassName: platform
+    resources:
+      requests: { cpu: 200m, memory: 512Mi }
+      limits: { memory: 1500Mi }
+    storageSpec:
+      volumeClaimTemplate:
+        spec:
+          storageClassName: longhorn
+          accessModes: ["ReadWriteOnce"]
+          resources: { requests: { storage: 15Gi } }
+
+alertmanager:
+  podDisruptionBudget:
+    enabled: true
+    minAvailable: null
+    maxUnavailable: 1
+  alertmanagerSpec:
+    replicas: 1
+    priorityClassName: platform
+    resources:
+      requests: { cpu: 25m, memory: 64Mi }
+    storage:
+      volumeClaimTemplate:
+        spec:
+          storageClassName: longhorn
+          accessModes: ["ReadWriteOnce"]
+          resources: { requests: { storage: 2Gi } }
+    secrets:
+      - alertmanager-notify
+  config:
+    global:
+      resolve_timeout: 5m
+    route:
+      group_by: ["alertname", "namespace"]
+      group_wait: 30s
+      group_interval: 5m
+      repeat_interval: 4h
+      receiver: "null"
+      routes:
+        - receiver: "null"
+          matchers:
+            - alertname = "Watchdog"
+        - receiver: page
+          matchers:
+            - severity = "critical"
+          group_wait: 0s
+          repeat_interval: 1h
+    receivers:
+      - name: "null"
+      - name: page
+        webhook_configs:
+          - url: http://ntfy-alertmanager-page.monitoring.svc.cluster.local:8080/
+            send_resolved: true
+            http_config:
+              basic_auth:
+                username: alertmanager
+                password_file: /etc/alertmanager/secrets/alertmanager-notify/webhook-password
+        telegram_configs:
+          - bot_token_file: /etc/alertmanager/secrets/alertmanager-notify/telegram-bot-token
+            chat_id: 123456789
+            parse_mode: HTML
+            send_resolved: true
+
+grafana:
+  enabled: true
+  priorityClassName: platform
+  serviceMonitor:
+    enabled: true
+    labels:
+      release: kube-prometheus-stack
+  deploymentStrategy:
+    type: Recreate
+  defaultDashboardsTimezone: America/New_York
+  additionalDataSources:
+    - name: Loki
+      type: loki
+      url: http://loki.monitoring.svc.cluster.local:3100
+      access: proxy
+  persistence:
+    enabled: true
+    storageClassName: longhorn
+    size: 2Gi
+  ingress:
+    enabled: true
+    ingressClassName: nginx
+    hosts: ["grafana.apps.example.com"]
+  resources:
+    requests: { cpu: 50m, memory: 128Mi }
+
+  envFromSecret: grafana-oidc
+
+  grafana.ini:
+    server:
+      root_url: https://grafana.apps.example.com
+    auth.generic_oauth:
+      enabled: true
+      name: Forgejo
+      allow_sign_up: true
+      scopes: "openid profile email groups"
+      role_attribute_path: contains(groups[*], 'platform:admins') && 'Admin' || contains(groups[*], 'platform:developers') && 'Editor' || 'Viewer'
+      auth_url: https://git.example.com/login/oauth/authorize
+      token_url: https://git.example.com/login/oauth/access_token
+      api_url: https://git.example.com/login/oauth/userinfo
+      use_pkce: true
+    auth:
+      disable_login_form: false
+
+prometheusOperator:
+  priorityClassName: platform
+  podDisruptionBudget:
+    enabled: true
+    minAvailable: null
+    maxUnavailable: 1
+
+kube-state-metrics:
+  priorityClassName: platform
+prometheus-node-exporter:
+  priorityClassName: platform
+
+defaultRules:
+  disabled:
+    KubeJobFailed: true
+
+kubeEtcd:
+  enabled: false
+  endpoints:
+    - 192.0.2.11
+    - 192.0.2.12
+    - 192.0.2.13
+  service:
+    enabled: true
+    port: 2381
+    targetPort: 2381
+kubeControllerManager:
+  enabled: false
+kubeScheduler:
+  enabled: false
+kubeProxy:
+  enabled: false

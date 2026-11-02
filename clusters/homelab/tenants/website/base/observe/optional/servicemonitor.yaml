@@ -1,0 +1,36 @@
+{
+  "apiVersion": "monitoring.coreos.com/v1",
+  "kind": "ServiceMonitor",
+  "metadata": {
+    "name": "website-metrics",
+    "namespace": "website-dev",
+    "labels": {
+      "app.kubernetes.io/name": "website",
+      "tenant": "website",
+      "env": "dev",
+      "release": "kube-prometheus-stack"
+    }
+  },
+  "spec": {
+    "namespaceSelector": {
+      "matchNames": [
+        "website-dev"
+      ]
+    },
+    "selector": {
+      "matchLabels": {
+        "app.kubernetes.io/name": "website",
+        "golden-path/metrics": "enabled"
+      }
+    },
+    "endpoints": [
+      {
+        "port": "metrics",
+        "path": "/metrics",
+        "interval": "30s",
+        "scrapeTimeout": "10s",
+        "honorLabels": false
+      }
+    ]
+  }
+}

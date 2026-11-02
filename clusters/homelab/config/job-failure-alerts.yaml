@@ -1,0 +1,82 @@
+---
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: job-failure
+  namespace: monitoring
+  labels:
+    release: kube-prometheus-stack
+    app.kubernetes.io/name: job-failure
+spec:
+  groups:
+    - name: job-failure
+      rules:
+        - alert: KubeJobFailed
+          expr: |-
+            kube_job_failed{job="kube-state-metrics", condition="true"} > 0
+            unless on (namespace, job_name)
+            kube_job_owner{job="kube-state-metrics", owner_kind="CronJob"}
+          for: 15m
+          labels:
+            severity: warning
+          annotations:
+            summary: "Job {{ $labels.namespace }}/{{ $labels.job_name }} failed"
+            description: >-
+              Job {{ $labels.namespace }}/{{ $labels.job_name }} failed and no
+              CronJob owns it, so no later run will clear this. Read the failed
+              pod's logs first (`kubectl -n {{ $labels.namespace }} logs
+              job/{{ $labels.job_name }}`) — deleting the Job clears the alert
+              by destroying that evidence, so only do it once the cause is known.
+        - alert: KubeCronJobLastRunFailed
+          expr: |-
+            max by (namespace, cronjob) (
+              (
+                kube_job_status_start_time{job="kube-state-metrics"}
+                and on (namespace, job_name)
+                (kube_job_failed{job="kube-state-metrics", condition="true"} == 1)
+              )
+              * on (namespace, job_name) group_left (cronjob)
+              max by (namespace, job_name, cronjob) (
+                label_replace(
+                  kube_job_owner{job="kube-state-metrics", owner_kind="CronJob"},
+                  "cronjob", "$1", "owner_name", "(.+)"
+                )
+              )
+            )
+            ==
+            max by (namespace, cronjob) (
+              (
+                kube_job_status_start_time{job="kube-state-metrics"}
+                and on (namespace, job_name)
+                (
+                  kube_job_failed{job="kube-state-metrics", condition="true"} == 1
+                  or
+                  kube_job_complete{job="kube-state-metrics", condition="true"} == 1
+                )
+              )
+              * on (namespace, job_name) group_left (cronjob)
+              max by (namespace, job_name, cronjob) (
+                label_replace(
+                  kube_job_owner{job="kube-state-metrics", owner_kind="CronJob"},
+                  "cronjob", "$1", "owner_name", "(.+)"
+                )
+              )
+            )
+          for: 15m
+          labels:
+            severity: warning
+          annotations:
+            summary: "The last run of CronJob {{ $labels.namespace }}/{{ $labels.cronjob }} failed"
+            description: >-
+              The most recent finished run of CronJob
+              {{ $labels.namespace }}/{{ $labels.cronjob }} (started
+              {{ $value | humanizeTimestamp }}) failed, and no run has succeeded
+              since. This clears by itself when the next run succeeds; deleting
+              the failed Job does not fix anything and destroys its logs, which
+              are the evidence. Older failed Jobs this CronJob still keeps
+              (failedJobsHistoryLimit) are history, not current state, and do
+              not hold this alert. Find the run with `kubectl -n
+              {{ $labels.namespace }} get jobs --sort-by=.status.startTime`,
+              read its pod logs, and re-run once fixed with `kubectl -n
+              {{ $labels.namespace }} create job --from=cronjob/{{ $labels.cronjob }}
+              {{ $labels.cronjob }}-manual-$(date +%s)`.

@@ -1,0 +1,41 @@
+---
+apiVersion: scheduling.k8s.io/v1
+kind: PriorityClass
+metadata:
+  name: platform-critical
+  labels:
+    app.kubernetes.io/name: platform-critical
+    app.kubernetes.io/part-of: homelab
+value: 1000000
+globalDefault: false
+description: >-
+  Cluster-serving platform components whose loss breaks ingress or certificate
+  admission for everything else (ingress-nginx, cert-manager). Ranks below the
+  bootstrap tier and Longhorn on purpose.
+---
+apiVersion: scheduling.k8s.io/v1
+kind: PriorityClass
+metadata:
+  name: platform
+  labels:
+    app.kubernetes.io/name: platform
+    app.kubernetes.io/part-of: homelab
+value: 100000
+globalDefault: false
+description: >-
+  Platform services that should outrank application workloads but whose loss is
+  degradation rather than outage — observability (Prometheus, Alertmanager,
+  Loki, Alloy), policy (Kyverno) and backup (Velero).
+---
+apiVersion: scheduling.k8s.io/v1
+kind: PriorityClass
+metadata:
+  name: workload-default
+  labels:
+    app.kubernetes.io/name: workload-default
+    app.kubernetes.io/part-of: homelab
+value: 0
+globalDefault: false
+description: >-
+  Application workloads. First to be preempted and first to be evicted; the
+  explicit spelling of the priority an unclassed pod already has.

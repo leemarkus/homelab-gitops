@@ -1,0 +1,24 @@
+apiVersion: monitoring.coreos.com/v1alpha1
+kind: ScrapeConfig
+metadata:
+  name: etcd-metrics
+  namespace: monitoring
+  labels:
+    release: kube-prometheus-stack
+    app.kubernetes.io/name: etcd-metrics
+    app.kubernetes.io/part-of: homelab
+spec:
+  jobName: etcd
+  scheme: HTTP
+  scrapeInterval: 30s
+  staticConfigs:
+    - labels:
+        job: etcd
+      targets:
+        - 192.0.2.11:2381
+        - 192.0.2.12:2381
+        - 192.0.2.13:2381
+  relabelings:
+    - sourceLabels: [__address__]
+      action: replace
+      targetLabel: instance

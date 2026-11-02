@@ -1,0 +1,132 @@
+# The promotion boundary can fail silently: CI goes red, nobody looks, and the
+# cluster keeps serving an old revision while Git says the change shipped.
+# This hourly check asks the Git server how far `deploy` lags `main` and
+# alerts past 6 commits, with a second alert if the check itself stops.
+---
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: promotion-lag-check
+  namespace: monitoring
+  labels:
+    app.kubernetes.io/name: promotion-lag-check
+spec:
+  schedule: "17 * * * *"
+  timeZone: "Etc/UTC"
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 1
+  failedJobsHistoryLimit: 3
+  jobTemplate:
+    spec:
+      backoffLimit: 0
+      activeDeadlineSeconds: 120
+      template:
+        metadata:
+          labels:
+            app.kubernetes.io/name: promotion-lag-check
+        spec:
+          restartPolicy: Never
+          securityContext:
+            runAsNonRoot: true
+            runAsUser: 65532
+            runAsGroup: 65532
+            seccompProfile:
+              type: RuntimeDefault
+          containers:
+            - name: check
+              image: alpine:3.22
+              imagePullPolicy: IfNotPresent
+              command: ["/bin/sh", "-c"]
+              args:
+                - |
+                  set -u
+                  API=https://git.example.com/api/v1/repos/platform/gitops
+                  MAX_COMMITS=6
+
+                  body=$(wget -qO- --timeout=20 "$API/compare/deploy...main" 2>/dev/null)
+                  if [ -z "$body" ]; then
+                    echo "FAIL no answer from $API/compare/deploy...main"
+                    echo "     Either Forgejo is unreachable or the deploy branch is gone."
+                    echo "     Cannot prove the deployed revision is current."
+                    exit 1
+                  fi
+
+                  behind=$(echo "$body" \
+                    | tr ',' '\n' \
+                    | sed -n 's/.*"total_commits":[[:space:]]*\([0-9]\{1,\}\).*/\1/p' \
+                    | head -1)
+                  if [ -z "$behind" ]; then
+                    echo "FAIL response carried no total_commits — API shape changed?"
+                    echo "$body" | head -c 400
+                    exit 1
+                  fi
+
+                  echo "[i] deploy is $behind commit(s) behind main (threshold $MAX_COMMITS)"
+                  if [ "$behind" -gt "$MAX_COMMITS" ]; then
+                    echo "FAIL promotion is stuck: $behind unpromoted commit(s) on main."
+                    echo "     The cluster is running an older revision than git implies."
+                    echo "     Check the newest validate-manifests run in Forgejo Actions."
+                    exit 1
+                  fi
+                  echo "OK  promotion boundary is current"
+              securityContext:
+                allowPrivilegeEscalation: false
+                capabilities:
+                  drop: ["ALL"]
+              resources:
+                requests: { cpu: 10m, memory: 16Mi }
+                limits: { cpu: 100m, memory: 64Mi }
+---
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: promotion-lag
+  namespace: monitoring
+  labels:
+    release: kube-prometheus-stack
+    app.kubernetes.io/name: promotion-lag-check
+spec:
+  groups:
+    - name: promotion-boundary
+      rules:
+        - alert: PromotionStuck
+          expr: |-
+            max(
+              (kube_job_status_failed{namespace="monitoring", job_name=~"promotion-lag-check-.*"} > 0)
+              and on (namespace, job_name)
+              (
+                kube_job_status_start_time{namespace="monitoring", job_name=~"promotion-lag-check-.*"}
+                ==
+                scalar(
+                  max(
+                    kube_job_status_start_time{namespace="monitoring", job_name=~"promotion-lag-check-.*"}
+                    and on (namespace, job_name)
+                    (kube_job_status_active{namespace="monitoring", job_name=~"promotion-lag-check-.*"} == 0)
+                  )
+                )
+              )
+            ) > 0
+          for: 30m
+          labels:
+            severity: warning
+          annotations:
+            summary: "deploy is lagging main — the cluster is not running what git says"
+            description: >-
+              promotion-lag-check failed: more than 6 commits sit on main without
+              being promoted to deploy, or the Forgejo API was unreachable. CI
+              gates promotion (ADR 0003), so the usual cause is a red
+              validate-manifests run that nobody has looked at — the change you
+              think shipped is not on the cluster. Check the newest run in
+              Forgejo Actions, fix forward, and the next green run promotes both
+              commits.
+        - alert: PromotionLagCheckNotRunning
+          expr: absent(kube_job_status_start_time{namespace="monitoring", job_name=~"promotion-lag-check-.*"})
+          for: 3h
+          labels:
+            severity: warning
+          annotations:
+            summary: "promotion lag check has stopped running"
+            description: >-
+              No promotion-lag-check Job has started in 3h (schedule is hourly).
+              While it is down there is nothing proving the deployed revision
+              matches main.

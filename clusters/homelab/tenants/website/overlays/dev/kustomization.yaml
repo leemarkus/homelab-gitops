@@ -1,0 +1,21 @@
+# Dev overlay. CI promotion writes newTag plus digest here; UNRELEASED is a
+# placeholder in this public copy.
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+namespace: website-dev
+resources:
+- ../../base
+- ../../base/observe
+- ingress.yaml
+labels:
+- includeTemplates: true
+  pairs:
+    golden-path/environment: dev
+    golden-path/tenant: website
+images:
+- name: registry.example.com/apps/website
+  newName: registry.example.com/apps/website
+  newTag: UNRELEASED
+replicas:
+- count: 1
+  name: website

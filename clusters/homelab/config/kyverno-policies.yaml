@@ -1,0 +1,177 @@
+# Admission policies. Audit cluster-wide; Enforce in application namespaces
+# (`ci`, `default` and every `*-dev` / `*-prod` tenant namespace). CI runs
+# `kyverno apply` against every manifest and rendered overlay before promotion,
+# so a change that would be rejected under Enforce never reaches `deploy`.
+---
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: require-requests-and-limits
+  annotations:
+    policies.kyverno.io/title: Require resource requests and memory limit
+    policies.kyverno.io/category: Platform conventions
+    policies.kyverno.io/severity: medium
+spec:
+  validationFailureAction: Audit
+  validationFailureActionOverrides:
+    - action: Enforce
+      namespaces:
+        - ci
+        - default
+        - "*-dev"
+        - "*-prod"
+  failurePolicy: Ignore
+  background: true
+  admission: true
+  emitWarning: false
+  rules:
+    - name: check-container-resources
+      skipBackgroundRequests: true
+      match:
+        any:
+          - resources:
+              kinds: [Pod]
+      validate:
+        allowExistingViolations: true
+        message: "Every container must set cpu+memory requests and a memory limit."
+        pattern:
+          spec:
+            containers:
+              - resources:
+                  requests:
+                    memory: "?*"
+                    cpu: "?*"
+                  limits:
+                    memory: "?*"
+---
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: disallow-latest-tag
+  annotations:
+    policies.kyverno.io/title: Disallow :latest and untagged images
+    policies.kyverno.io/category: Platform conventions
+    policies.kyverno.io/severity: medium
+spec:
+  validationFailureAction: Audit
+  validationFailureActionOverrides:
+    - action: Enforce
+      namespaces:
+        - ci
+        - default
+        - "*-dev"
+        - "*-prod"
+  failurePolicy: Ignore
+  background: true
+  admission: true
+  emitWarning: false
+  rules:
+    - name: require-image-tag
+      skipBackgroundRequests: true
+      match:
+        any:
+          - resources:
+              kinds: [Pod]
+      validate:
+        allowExistingViolations: true
+        message: "An explicit image tag is required (no bare image name)."
+        pattern:
+          spec:
+            containers:
+              - image: "*:*"
+    - name: disallow-latest-tag
+      skipBackgroundRequests: true
+      match:
+        any:
+          - resources:
+              kinds: [Pod]
+      validate:
+        allowExistingViolations: true
+        message: "Using a mutable ':latest' tag is not allowed (pin the tag)."
+        pattern:
+          spec:
+            containers:
+              - image: "!*:latest"
+---
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: require-readiness-probe
+  annotations:
+    policies.kyverno.io/title: Require a readiness probe
+    policies.kyverno.io/category: Platform conventions
+    policies.kyverno.io/severity: low
+    pod-policies.kyverno.io/autogen-controllers: Deployment,StatefulSet,DaemonSet
+spec:
+  validationFailureAction: Audit
+  validationFailureActionOverrides:
+    - action: Enforce
+      namespaces:
+        - ci
+        - default
+        - "*-dev"
+        - "*-prod"
+  failurePolicy: Ignore
+  background: true
+  admission: true
+  emitWarning: false
+  rules:
+    - name: check-readiness-probe
+      skipBackgroundRequests: true
+      match:
+        any:
+          - resources:
+              kinds: [Pod]
+      preconditions:
+        all:
+          - key: "{{ request.object.metadata.ownerReferences[0].kind || '' }}"
+            operator: NotEquals
+            value: Job
+      exclude:
+        any:
+          - resources:
+              namespaces: [system-upgrade]
+      validate:
+        allowExistingViolations: true
+        message: "Every container should define a readinessProbe ."
+        pattern:
+          spec:
+            containers:
+              - readinessProbe:
+                  periodSeconds: ">0"
+---
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: require-app-name-label
+  annotations:
+    policies.kyverno.io/title: Require app.kubernetes.io/name label
+    policies.kyverno.io/category: Platform conventions
+    policies.kyverno.io/severity: low
+spec:
+  validationFailureAction: Audit
+  validationFailureActionOverrides:
+    - action: Enforce
+      namespaces:
+        - ci
+        - default
+        - "*-dev"
+        - "*-prod"
+  failurePolicy: Ignore
+  background: true
+  admission: true
+  emitWarning: false
+  rules:
+    - name: check-app-name
+      skipBackgroundRequests: true
+      match:
+        any:
+          - resources:
+              kinds: [Deployment, StatefulSet, DaemonSet]
+      validate:
+        allowExistingViolations: true
+        message: "Workloads should carry the app.kubernetes.io/name label."
+        pattern:
+          metadata:
+            labels:
+              app.kubernetes.io/name: "?*"

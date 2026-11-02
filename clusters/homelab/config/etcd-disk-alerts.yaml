@@ -1,0 +1,90 @@
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: homelab-etcd-disk
+  namespace: monitoring
+  labels:
+    release: kube-prometheus-stack
+    app.kubernetes.io/part-of: homelab
+spec:
+  groups:
+    - name: homelab.etcd.disk
+      rules:
+        - alert: EtcdWalFsyncSlow
+          expr: |
+            (
+              sum by (instance) (rate(etcd_disk_wal_fsync_duration_seconds_bucket{le="+Inf"}[6h]))
+              - sum by (instance) (rate(etcd_disk_wal_fsync_duration_seconds_bucket{le="0.016"}[6h]))
+            )
+            / sum by (instance) (rate(etcd_disk_wal_fsync_duration_seconds_bucket{le="+Inf"}[6h]))
+            > 0.04
+          for: 15m
+          labels:
+            severity: warning
+          annotations:
+            summary: "etcd WAL fsync slow fraction over 4% in 6h on {{ $labels.instance }}"
+            description: >-
+              More than 4% of WAL fsyncs exceeded 16ms over the last 6h
+              ({{ $value | humanizePercentage }}), held for 15m. Check disk health
+              and contention from the nightly VM backup window on this
+              control-plane host; that window is a known, accepted source of
+              slow fsyncs on node-3's SATA SSD.
+
+        - alert: EtcdWalFsyncCritical
+          expr: |
+            (
+              sum by (instance) (rate(etcd_disk_wal_fsync_duration_seconds_bucket{le="+Inf"}[1h]))
+              - sum by (instance) (rate(etcd_disk_wal_fsync_duration_seconds_bucket{le="0.016"}[1h]))
+            )
+            / sum by (instance) (rate(etcd_disk_wal_fsync_duration_seconds_bucket{le="+Inf"}[1h]))
+            > 0.05
+            and on (instance)
+            (
+              (
+                sum by (instance) (rate(etcd_disk_wal_fsync_duration_seconds_bucket{le="+Inf"}[6h]))
+                - sum by (instance) (rate(etcd_disk_wal_fsync_duration_seconds_bucket{le="0.016"}[6h]))
+              )
+              / sum by (instance) (rate(etcd_disk_wal_fsync_duration_seconds_bucket{le="+Inf"}[6h]))
+              > 0.05
+            )
+          for: 5m
+          labels:
+            severity: critical
+          annotations:
+            summary: "etcd WAL fsync slow fraction over 5% on {{ $labels.instance }}"
+            description: >-
+              More than 5% of WAL fsyncs exceeded 16ms over BOTH the last hour
+              and last 6h (1h fraction: {{ $value | humanizePercentage }}),
+              held for 5m. Check disk health
+              and contention from the nightly VM backup window on this
+              control-plane host; that window is a known, accepted source of
+              slow fsyncs on node-3's SATA SSD.
+
+        - alert: EtcdBackendCommitSlow
+          expr: |
+            histogram_quantile(0.99,
+              sum by (instance, le) (rate(etcd_disk_backend_commit_duration_seconds_bucket[5m]))
+            ) > 0.120
+          for: 30m
+          labels:
+            severity: warning
+          annotations:
+            summary: "etcd backend commit p99 over 120ms on {{ $labels.instance }}"
+            description: >-
+              Backend commit p99 above etcd's 120ms guidance for 30m. Distinct
+              from WAL fsync — this is the boltdb commit path, so it points at
+              sustained write volume or a slow device rather than fsync latency.
+
+        - alert: EtcdMetricsMissing
+          expr: absent(etcd_disk_wal_fsync_duration_seconds_bucket)
+          for: 15m
+          labels:
+            severity: warning
+          annotations:
+            summary: "etcd disk metrics are not being scraped"
+            description: >-
+              etcd_disk_wal_fsync_duration_seconds is absent, so etcd disk
+              latency is unobservable, and this failure is silent unless alerted
+              on. Check that `etcd-expose-metrics:
+              true` is still in /etc/rancher/k3s/config.yaml on all three control
+              planes and that kubeEtcd.endpoints is still populated.

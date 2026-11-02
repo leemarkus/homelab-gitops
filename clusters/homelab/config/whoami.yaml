@@ -1,0 +1,46 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: whoami
+  namespace: default
+  labels:
+    app: whoami
+    app.kubernetes.io/part-of: homelab
+    app.kubernetes.io/name: whoami
+spec:
+  replicas: 2
+  selector: { matchLabels: { app: whoami } }
+  template:
+    metadata: { labels: { app: whoami } }
+    spec:
+      containers:
+        - name: whoami
+          image: traefik/whoami:v1.12.0
+          ports: [{ containerPort: 80 }]
+          readinessProbe:
+            httpGet: { path: /, port: 80 }
+            periodSeconds: 10
+            timeoutSeconds: 2
+          resources:
+            requests: { cpu: 10m, memory: 16Mi }
+            limits: { cpu: 100m, memory: 64Mi }
+---
+apiVersion: v1
+kind: Service
+metadata: { name: whoami, namespace: default }
+spec:
+  selector: { app: whoami }
+  ports: [{ port: 80, targetPort: 80 }]
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata: { name: whoami, namespace: default }
+spec:
+  ingressClassName: nginx
+  rules:
+    - host: whoami.apps.example.com
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend: { service: { name: whoami, port: { number: 80 } } }

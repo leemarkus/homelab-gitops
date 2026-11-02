@@ -1,0 +1,230 @@
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: slo-burn-rate
+  namespace: monitoring
+  labels:
+    release: kube-prometheus-stack
+    app.kubernetes.io/name: slo-burn-rate
+spec:
+  groups:
+    - name: slo-ingress-nginx-recording
+      interval: 30s
+      rules:
+        - record: slo:ingress_error_ratio:rate5m
+          expr: |-
+            (sum(rate(nginx_ingress_controller_requests{status=~"5.."}[5m])) or vector(0))
+            /
+            sum(rate(nginx_ingress_controller_requests[5m]))
+        - record: slo:ingress_error_ratio:rate30m
+          expr: |-
+            (sum(rate(nginx_ingress_controller_requests{status=~"5.."}[30m])) or vector(0))
+            /
+            sum(rate(nginx_ingress_controller_requests[30m]))
+        - record: slo:ingress_error_ratio:rate1h
+          expr: |-
+            (sum(rate(nginx_ingress_controller_requests{status=~"5.."}[1h])) or vector(0))
+            /
+            sum(rate(nginx_ingress_controller_requests[1h]))
+        - record: slo:ingress_error_ratio:rate2h
+          expr: |-
+            (sum(rate(nginx_ingress_controller_requests{status=~"5.."}[2h])) or vector(0))
+            /
+            sum(rate(nginx_ingress_controller_requests[2h]))
+        - record: slo:ingress_error_ratio:rate6h
+          expr: |-
+            (sum(rate(nginx_ingress_controller_requests{status=~"5.."}[6h])) or vector(0))
+            /
+            sum(rate(nginx_ingress_controller_requests[6h]))
+        - record: slo:ingress_error_ratio:rate1d
+          expr: |-
+            (sum(rate(nginx_ingress_controller_requests{status=~"5.."}[1d])) or vector(0))
+            /
+            sum(rate(nginx_ingress_controller_requests[1d]))
+        - record: slo:ingress_error_ratio:rate3d
+          expr: |-
+            (sum(rate(nginx_ingress_controller_requests{status=~"5.."}[3d])) or vector(0))
+            /
+            sum(rate(nginx_ingress_controller_requests[3d]))
+
+    - name: slo-grafana-recording
+      interval: 30s
+      rules:
+        - record: slo:grafana_error_ratio:rate5m
+          expr: |-
+            (sum(rate(grafana_http_request_duration_seconds_count{status_code=~"5.."}[5m])) or vector(0))
+            /
+            sum(rate(grafana_http_request_duration_seconds_count[5m]))
+        - record: slo:grafana_error_ratio:rate30m
+          expr: |-
+            (sum(rate(grafana_http_request_duration_seconds_count{status_code=~"5.."}[30m])) or vector(0))
+            /
+            sum(rate(grafana_http_request_duration_seconds_count[30m]))
+        - record: slo:grafana_error_ratio:rate1h
+          expr: |-
+            (sum(rate(grafana_http_request_duration_seconds_count{status_code=~"5.."}[1h])) or vector(0))
+            /
+            sum(rate(grafana_http_request_duration_seconds_count[1h]))
+        - record: slo:grafana_error_ratio:rate2h
+          expr: |-
+            (sum(rate(grafana_http_request_duration_seconds_count{status_code=~"5.."}[2h])) or vector(0))
+            /
+            sum(rate(grafana_http_request_duration_seconds_count[2h]))
+        - record: slo:grafana_error_ratio:rate6h
+          expr: |-
+            (sum(rate(grafana_http_request_duration_seconds_count{status_code=~"5.."}[6h])) or vector(0))
+            /
+            sum(rate(grafana_http_request_duration_seconds_count[6h]))
+        - record: slo:grafana_error_ratio:rate1d
+          expr: |-
+            (sum(rate(grafana_http_request_duration_seconds_count{status_code=~"5.."}[1d])) or vector(0))
+            /
+            sum(rate(grafana_http_request_duration_seconds_count[1d]))
+        - record: slo:grafana_error_ratio:rate3d
+          expr: |-
+            (sum(rate(grafana_http_request_duration_seconds_count{status_code=~"5.."}[3d])) or vector(0))
+            /
+            sum(rate(grafana_http_request_duration_seconds_count[3d]))
+
+    - name: slo-forgejo-recording
+      interval: 1m
+      rules:
+        - record: slo:forgejo_probe_failing:bool
+          expr: |-
+            clamp_max(
+              max(
+                (kube_job_status_failed{namespace="monitoring", job_name=~"forgejo-availability-check-.*"} > bool 0)
+                and on (namespace, job_name)
+                (
+                  kube_job_status_start_time{namespace="monitoring", job_name=~"forgejo-availability-check-.*"}
+                  == scalar(max(kube_job_status_start_time{namespace="monitoring", job_name=~"forgejo-availability-check-.*"}))
+                )
+              ) or vector(0),
+            1)
+        - record: slo:forgejo_downtime_ratio:rate1h
+          expr: avg_over_time(slo:forgejo_probe_failing:bool[1h])
+        - record: slo:forgejo_downtime_ratio:rate6h
+          expr: avg_over_time(slo:forgejo_probe_failing:bool[6h])
+        - record: slo:forgejo_downtime_ratio:rate1d
+          expr: avg_over_time(slo:forgejo_probe_failing:bool[1d])
+        - record: slo:forgejo_downtime_ratio:rate3d
+          expr: avg_over_time(slo:forgejo_probe_failing:bool[3d])
+
+    - name: slo-burn-alerts
+      rules:
+        - alert: IngressErrorBudgetFastBurn
+          expr: |-
+            (slo:ingress_error_ratio:rate5m / 0.005 > 14.4)
+            and
+            (slo:ingress_error_ratio:rate1h / 0.005 > 14.4)
+            or
+            (slo:ingress_error_ratio:rate30m / 0.005 > 6)
+            and
+            (slo:ingress_error_ratio:rate6h / 0.005 > 6)
+          for: 2m
+          labels:
+            severity: critical
+          annotations:
+            summary: "ingress-nginx is burning its 99.5% error budget fast"
+            description: >-
+              5xx ratio through the ingress controller is consuming the 30-day
+              error budget at page speed (2% of budget per hour or worse).
+              Every service behind the ingress LoadBalancer IP is affected. Check
+              ingress-nginx pods first, then whether a single backend's 502s
+              dominate: sum by (exported_service)
+              (rate(nginx_ingress_controller_requests{status=~"5.."}[5m])).
+
+        - alert: IngressErrorBudgetSlowBurn
+          expr: |-
+            (slo:ingress_error_ratio:rate2h / 0.005 > 3)
+            and
+            (slo:ingress_error_ratio:rate1d / 0.005 > 3)
+            or
+            (slo:ingress_error_ratio:rate6h / 0.005 > 1)
+            and
+            (slo:ingress_error_ratio:rate3d / 0.005 > 1)
+          for: 15m
+          labels:
+            severity: warning
+          annotations:
+            summary: "ingress-nginx error budget leaking — will exhaust inside the window"
+            description: >-
+              Sustained 5xx ratio above the 99.5% SLO line. Not page-worthy
+              alone, but at this rate the 30-day budget runs out early. Find
+              the dominant backend before it becomes the fast-burn page.
+
+        - alert: GrafanaErrorBudgetFastBurn
+          expr: |-
+            (slo:grafana_error_ratio:rate5m / 0.01 > 14.4)
+            and
+            (slo:grafana_error_ratio:rate1h / 0.01 > 14.4)
+            or
+            (slo:grafana_error_ratio:rate30m / 0.01 > 6)
+            and
+            (slo:grafana_error_ratio:rate6h / 0.01 > 6)
+          for: 2m
+          labels:
+            severity: critical
+          annotations:
+            summary: "Grafana is burning its 99% error budget fast"
+            description: >-
+              Grafana's own HTTP 5xx ratio is at page speed. Usual suspects
+              here: the RWO volume + Recreate rollout wedge, or the
+              Forgejo OIDC provider being down (login redirects erroring).
+
+        - alert: GrafanaErrorBudgetSlowBurn
+          expr: |-
+            (slo:grafana_error_ratio:rate2h / 0.01 > 3)
+            and
+            (slo:grafana_error_ratio:rate1d / 0.01 > 3)
+            or
+            (slo:grafana_error_ratio:rate6h / 0.01 > 1)
+            and
+            (slo:grafana_error_ratio:rate3d / 0.01 > 1)
+          for: 15m
+          labels:
+            severity: warning
+          annotations:
+            summary: "Grafana error budget leaking"
+            description: >-
+              Sustained 5xx above the 99% SLO line — slow leak, not an
+              outage. Check panels/datasource errors and the OIDC path.
+
+        - alert: ForgejoErrorBudgetSlowBurn
+          expr: |-
+            (slo:forgejo_downtime_ratio:rate1h / 0.01 > 3)
+            and
+            (slo:forgejo_downtime_ratio:rate1d / 0.01 > 3)
+            or
+            (slo:forgejo_downtime_ratio:rate6h / 0.01 > 1)
+            and
+            (slo:forgejo_downtime_ratio:rate3d / 0.01 > 1)
+          for: 10m
+          labels:
+            severity: warning
+          annotations:
+            summary: "Forgejo's 99% budget is leaking across repeated outages"
+            description: >-
+              The 10-minute availability probe is failing often enough that the
+              30-day budget (7.2h) will not last the month, even though each
+              individual outage may have cleared its ForgejoDown page. Look for
+              a pattern: reverse-proxy restarts, VM resource pressure, nightly
+              windows.
+
+        - alert: SLOSliAbsent
+          expr: |-
+            absent(nginx_ingress_controller_requests)
+            or
+            absent(grafana_http_request_duration_seconds_count)
+          for: 30m
+          labels:
+            severity: warning
+          annotations:
+            summary: "An SLO's SLI series is absent — burn rates are blind"
+            description: >-
+              nginx_ingress_controller_requests or
+              grafana_http_request_duration_seconds_count has no series. The
+              burn-rate rules read 'no data' as zero burn, so an SLI that
+              vanishes makes every SLO look perfect. Check the ServiceMonitors
+              (release label!) and the underlying exporters. The Forgejo SLI
+              has its own absence guard in forgejo-availability-check.yaml.

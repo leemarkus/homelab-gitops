@@ -1,0 +1,196 @@
+# Run: python3 tests/prometheus/run.py (extracts the actual PrometheusRule spec).
+# Cases for clusters/homelab/config/job-failure-alerts.yaml. Series carry the
+# kube-state-metrics label shapes recorded live (kube_job_failed with
+# condition="true"/"false"/"unknown"; kube_job_owner with owner_kind/owner_name).
+# kube_job_status_start_time values are small integers standing in for epoch
+# seconds — only their order matters. Job names follow the CronJob shape
+# <cronjob>-<n>, so kube_job_owner's owner_name is the stem.
+#
+#   stale-check        two retained failures, newest finished run succeeded
+#                      (the shape a recovered CronJob leaves behind)
+#   genuine-check      newest finished run failed
+#   inflight-check     success, then a run in flight (no terminal condition)
+#   inflightfail-check failure, then a run in flight: still failing
+#   retry-check        a pod failed, the retry succeeded (status.failed=1, Complete)
+#   dup-check          failing, every series duplicated across two
+#                      kube-state-metrics instances (restart overlap)
+#   oneoff             a Job no CronJob owns, failed
+rule_files:
+- job-failure-rules.yaml
+evaluation_interval: 1m
+tests:
+- name: CronJob alerts follow the newest finished run; only un-owned Jobs latch
+  interval: 1m
+  input_series:
+  # stale-check
+  - series: kube_job_status_start_time{job="kube-state-metrics",namespace="monitoring",job_name="stale-check-1"}
+    values: 100x40
+  - series: kube_job_failed{job="kube-state-metrics",namespace="monitoring",job_name="stale-check-1",condition="true"}
+    values: 1x40
+  - series: kube_job_failed{job="kube-state-metrics",namespace="monitoring",job_name="stale-check-1",condition="false"}
+    values: 0x40
+  - series: kube_job_owner{job="kube-state-metrics",namespace="monitoring",job_name="stale-check-1",owner_kind="CronJob",owner_name="stale-check",owner_is_controller="true"}
+    values: 1x40
+  - series: kube_job_status_start_time{job="kube-state-metrics",namespace="monitoring",job_name="stale-check-2"}
+    values: 200x40
+  - series: kube_job_failed{job="kube-state-metrics",namespace="monitoring",job_name="stale-check-2",condition="true"}
+    values: 1x40
+  - series: kube_job_failed{job="kube-state-metrics",namespace="monitoring",job_name="stale-check-2",condition="false"}
+    values: 0x40
+  - series: kube_job_owner{job="kube-state-metrics",namespace="monitoring",job_name="stale-check-2",owner_kind="CronJob",owner_name="stale-check",owner_is_controller="true"}
+    values: 1x40
+  - series: kube_job_status_start_time{job="kube-state-metrics",namespace="monitoring",job_name="stale-check-3"}
+    values: 300x40
+  - series: kube_job_complete{job="kube-state-metrics",namespace="monitoring",job_name="stale-check-3",condition="true"}
+    values: 1x40
+  - series: kube_job_complete{job="kube-state-metrics",namespace="monitoring",job_name="stale-check-3",condition="false"}
+    values: 0x40
+  - series: kube_job_owner{job="kube-state-metrics",namespace="monitoring",job_name="stale-check-3",owner_kind="CronJob",owner_name="stale-check",owner_is_controller="true"}
+    values: 1x40
+  # genuine-check
+  - series: kube_job_status_start_time{job="kube-state-metrics",namespace="monitoring",job_name="genuine-check-1"}
+    values: 100x40
+  - series: kube_job_complete{job="kube-state-metrics",namespace="monitoring",job_name="genuine-check-1",condition="true"}
+    values: 1x40
+  - series: kube_job_owner{job="kube-state-metrics",namespace="monitoring",job_name="genuine-check-1",owner_kind="CronJob",owner_name="genuine-check",owner_is_controller="true"}
+    values: 1x40
+  - series: kube_job_status_start_time{job="kube-state-metrics",namespace="monitoring",job_name="genuine-check-2"}
+    values: 200x40
+  - series: kube_job_failed{job="kube-state-metrics",namespace="monitoring",job_name="genuine-check-2",condition="true"}
+    values: 1x40
+  - series: kube_job_owner{job="kube-state-metrics",namespace="monitoring",job_name="genuine-check-2",owner_kind="CronJob",owner_name="genuine-check",owner_is_controller="true"}
+    values: 1x40
+  # inflight-check
+  - series: kube_job_status_start_time{job="kube-state-metrics",namespace="monitoring",job_name="inflight-check-1"}
+    values: 100x40
+  - series: kube_job_complete{job="kube-state-metrics",namespace="monitoring",job_name="inflight-check-1",condition="true"}
+    values: 1x40
+  - series: kube_job_owner{job="kube-state-metrics",namespace="monitoring",job_name="inflight-check-1",owner_kind="CronJob",owner_name="inflight-check",owner_is_controller="true"}
+    values: 1x40
+  - series: kube_job_status_start_time{job="kube-state-metrics",namespace="monitoring",job_name="inflight-check-2"}
+    values: 200x40
+  - series: kube_job_owner{job="kube-state-metrics",namespace="monitoring",job_name="inflight-check-2",owner_kind="CronJob",owner_name="inflight-check",owner_is_controller="true"}
+    values: 1x40
+  # inflightfail-check
+  - series: kube_job_status_start_time{job="kube-state-metrics",namespace="monitoring",job_name="inflightfail-check-1"}
+    values: 100x40
+  - series: kube_job_failed{job="kube-state-metrics",namespace="monitoring",job_name="inflightfail-check-1",condition="true"}
+    values: 1x40
+  - series: kube_job_owner{job="kube-state-metrics",namespace="monitoring",job_name="inflightfail-check-1",owner_kind="CronJob",owner_name="inflightfail-check",owner_is_controller="true"}
+    values: 1x40
+  - series: kube_job_status_start_time{job="kube-state-metrics",namespace="monitoring",job_name="inflightfail-check-2"}
+    values: 200x40
+  - series: kube_job_owner{job="kube-state-metrics",namespace="monitoring",job_name="inflightfail-check-2",owner_kind="CronJob",owner_name="inflightfail-check",owner_is_controller="true"}
+    values: 1x40
+  # retry-check: status.failed counts the failed pod, but the Job is Complete
+  - series: kube_job_status_start_time{job="kube-state-metrics",namespace="monitoring",job_name="retry-check-1"}
+    values: 100x40
+  - series: kube_job_status_failed{job="kube-state-metrics",namespace="monitoring",job_name="retry-check-1"}
+    values: 1x40
+  - series: kube_job_complete{job="kube-state-metrics",namespace="monitoring",job_name="retry-check-1",condition="true"}
+    values: 1x40
+  - series: kube_job_owner{job="kube-state-metrics",namespace="monitoring",job_name="retry-check-1",owner_kind="CronJob",owner_name="retry-check",owner_is_controller="true"}
+    values: 1x40
+  # dup-check: two exporter instances report the failing Job
+  - series: kube_job_status_start_time{job="kube-state-metrics",namespace="monitoring",job_name="dup-check-1"}
+    values: 100x40
+  - series: kube_job_complete{job="kube-state-metrics",namespace="monitoring",job_name="dup-check-1",condition="true"}
+    values: 1x40
+  - series: kube_job_owner{job="kube-state-metrics",namespace="monitoring",job_name="dup-check-1",owner_kind="CronJob",owner_name="dup-check",owner_is_controller="true"}
+    values: 1x40
+  - series: kube_job_status_start_time{job="kube-state-metrics",namespace="monitoring",job_name="dup-check-2",instance="a:8080"}
+    values: 200x40
+  - series: kube_job_status_start_time{job="kube-state-metrics",namespace="monitoring",job_name="dup-check-2",instance="b:8080"}
+    values: 200x40
+  - series: kube_job_failed{job="kube-state-metrics",namespace="monitoring",job_name="dup-check-2",condition="true",instance="a:8080"}
+    values: 1x40
+  - series: kube_job_failed{job="kube-state-metrics",namespace="monitoring",job_name="dup-check-2",condition="true",instance="b:8080"}
+    values: 1x40
+  - series: kube_job_owner{job="kube-state-metrics",namespace="monitoring",job_name="dup-check-2",owner_kind="CronJob",owner_name="dup-check",owner_is_controller="true",instance="a:8080"}
+    values: 1x40
+  - series: kube_job_owner{job="kube-state-metrics",namespace="monitoring",job_name="dup-check-2",owner_kind="CronJob",owner_name="dup-check",owner_is_controller="true",instance="b:8080"}
+    values: 1x40
+  # oneoff: no CronJob owner
+  - series: kube_job_status_start_time{job="kube-state-metrics",namespace="default",job_name="oneoff"}
+    values: 100x40
+  - series: kube_job_failed{job="kube-state-metrics",namespace="default",job_name="oneoff",condition="true"}
+    values: 1x40
+  - series: kube_job_failed{job="kube-state-metrics",namespace="default",job_name="oneoff",condition="false"}
+    values: 0x40
+  - series: kube_job_owner{job="kube-state-metrics",namespace="default",job_name="oneoff",owner_kind="<none>",owner_name="<none>",owner_is_controller="<none>"}
+    values: 1x40
+  promql_expr_test:
+  # Control: the stock expression (switched off through defaultRules) latches on stale-check's retained failures.
+  - expr: count by (job_name) (kube_job_failed{job="kube-state-metrics", job_name=~"stale-check-.*"} > 0)
+    eval_time: 20m
+    exp_samples:
+    - labels: '{job_name="stale-check-1"}'
+      value: 1
+    - labels: '{job_name="stale-check-2"}'
+      value: 1
+  # Inside the 15m hold nothing fires.
+  - expr: ALERTS{alertname=~"KubeJobFailed|KubeCronJobLastRunFailed",alertstate="firing"}
+    eval_time: 14m
+    exp_samples: []
+  # After it: one alert per CronJob whose newest finished run failed, and the
+  # un-owned Job. stale-check, inflight-check and retry-check stay quiet;
+  # no CronJob-owned Job reaches KubeJobFailed.
+  - expr: ALERTS{alertname=~"KubeJobFailed|KubeCronJobLastRunFailed",alertstate="firing"}
+    eval_time: 20m
+    exp_samples:
+    - labels: ALERTS{alertname="KubeCronJobLastRunFailed",alertstate="firing",namespace="monitoring",cronjob="genuine-check",severity="warning"}
+      value: 1
+    - labels: ALERTS{alertname="KubeCronJobLastRunFailed",alertstate="firing",namespace="monitoring",cronjob="inflightfail-check",severity="warning"}
+      value: 1
+    - labels: ALERTS{alertname="KubeCronJobLastRunFailed",alertstate="firing",namespace="monitoring",cronjob="dup-check",severity="warning"}
+      value: 1
+    - labels: ALERTS{alertname="KubeJobFailed",alertstate="firing",job="kube-state-metrics",namespace="default",job_name="oneoff",condition="true",severity="warning"}
+      value: 1
+- name: a CronJob that recovers clears; a new failure after a success fires again
+  interval: 1m
+  input_series:
+  # recover-check: run 1 fails at t0; run 2 starts at minute 20 and completes.
+  - series: kube_job_status_start_time{job="kube-state-metrics",namespace="monitoring",job_name="recover-check-1"}
+    values: 100x60
+  - series: kube_job_failed{job="kube-state-metrics",namespace="monitoring",job_name="recover-check-1",condition="true"}
+    values: 1x60
+  - series: kube_job_owner{job="kube-state-metrics",namespace="monitoring",job_name="recover-check-1",owner_kind="CronJob",owner_name="recover-check",owner_is_controller="true"}
+    values: 1x60
+  - series: kube_job_status_start_time{job="kube-state-metrics",namespace="monitoring",job_name="recover-check-2"}
+    values: _x20 200x40
+  - series: kube_job_complete{job="kube-state-metrics",namespace="monitoring",job_name="recover-check-2",condition="true"}
+    values: _x21 1x39
+  - series: kube_job_owner{job="kube-state-metrics",namespace="monitoring",job_name="recover-check-2",owner_kind="CronJob",owner_name="recover-check",owner_is_controller="true"}
+    values: _x20 1x40
+  # run 3 starts at minute 35 and fails at minute 36.
+  - series: kube_job_status_start_time{job="kube-state-metrics",namespace="monitoring",job_name="recover-check-3"}
+    values: _x35 300x25
+  - series: kube_job_failed{job="kube-state-metrics",namespace="monitoring",job_name="recover-check-3",condition="true"}
+    values: _x36 1x24
+  - series: kube_job_owner{job="kube-state-metrics",namespace="monitoring",job_name="recover-check-3",owner_kind="CronJob",owner_name="recover-check",owner_is_controller="true"}
+    values: _x35 1x25
+  promql_expr_test:
+  - expr: ALERTS{alertname="KubeCronJobLastRunFailed",alertstate="firing"}
+    eval_time: 16m
+    exp_samples:
+    - labels: ALERTS{alertname="KubeCronJobLastRunFailed",alertstate="firing",namespace="monitoring",cronjob="recover-check",severity="warning"}
+      value: 1
+  # Run 2 in flight from minute 20: newest FINISHED is still run 1, still firing.
+  - expr: ALERTS{alertname="KubeCronJobLastRunFailed",alertstate="firing"}
+    eval_time: 20m
+    exp_samples:
+    - labels: ALERTS{alertname="KubeCronJobLastRunFailed",alertstate="firing",namespace="monitoring",cronjob="recover-check",severity="warning"}
+      value: 1
+  # Run 2 completed at minute 21: cleared, although run 1's Job is still retained.
+  - expr: ALERTS{alertname="KubeCronJobLastRunFailed"}
+    eval_time: 22m
+    exp_samples: []
+  # Run 3 failed at minute 36: pending, then firing after the 15m hold.
+  - expr: ALERTS{alertname="KubeCronJobLastRunFailed",alertstate="firing"}
+    eval_time: 50m
+    exp_samples: []
+  - expr: ALERTS{alertname="KubeCronJobLastRunFailed",alertstate="firing"}
+    eval_time: 51m
+    exp_samples:
+    - labels: ALERTS{alertname="KubeCronJobLastRunFailed",alertstate="firing",namespace="monitoring",cronjob="recover-check",severity="warning"}
+      value: 1

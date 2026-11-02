@@ -1,0 +1,33 @@
+apiVersion: v1
+kind: ResourceQuota
+metadata:
+  name: forgejo-runner-quota
+  namespace: forgejo-runner
+  labels:
+    app.kubernetes.io/name: forgejo-runner-quota
+    app.kubernetes.io/part-of: homelab
+spec:
+  hard:
+    requests.cpu: "2"
+    requests.memory: 4Gi
+    limits.memory: 12Gi
+    pods: "10"
+    persistentvolumeclaims: "3"
+    requests.storage: 30Gi
+---
+apiVersion: v1
+kind: LimitRange
+metadata:
+  name: forgejo-runner-container-limits
+  namespace: forgejo-runner
+  labels:
+    app.kubernetes.io/name: forgejo-runner-container-limits
+    app.kubernetes.io/part-of: homelab
+spec:
+  limits:
+    - type: Container
+      default:
+        memory: 512Mi
+      defaultRequest:
+        cpu: 50m
+        memory: 128Mi

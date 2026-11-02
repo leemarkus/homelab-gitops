@@ -1,0 +1,51 @@
+upgradeCRDs: false
+
+priorityClassName: platform
+
+initContainers:
+  - name: velero-plugin-for-aws
+    image: velero/velero-plugin-for-aws:v1.12.1
+    volumeMounts:
+      - mountPath: /target
+        name: plugins
+
+configuration:
+  backupStorageLocation:
+    - name: default
+      provider: aws
+      bucket: cluster-backups
+      prefix: velero
+      config:
+        region: us-east-1
+        s3ForcePathStyle: "true"
+        s3Url: http://203.0.113.98:9000
+  volumeSnapshotLocation: []
+
+snapshotsEnabled: false
+deployNodeAgent: false
+
+credentials:
+  useSecret: true
+  existingSecret: velero-minio-credentials
+
+schedules:
+  daily-objects:
+    disabled: false
+    schedule: "0 2 * * *"
+    template:
+      ttl: 720h
+      snapshotVolumes: false
+      excludedResources:
+        - events
+        - events.events.k8s.io
+
+resources:
+  requests: { cpu: 50m, memory: 256Mi }
+  limits: { memory: 1Gi }
+
+metrics:
+  enabled: true
+  serviceMonitor:
+    enabled: true
+    additionalLabels:
+      release: kube-prometheus-stack

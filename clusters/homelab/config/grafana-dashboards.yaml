@@ -1,0 +1,1132 @@
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: grafana-dashboard-dr-delivery
+  namespace: monitoring
+  labels:
+    grafana_dashboard: "1"
+    app.kubernetes.io/name: grafana-dashboard-dr-delivery
+data:
+  homelab-dr-delivery.json: |
+    {
+      "uid": "homelab-dr-delivery",
+      "title": "Homelab \u2014 DR & Delivery",
+      "tags": [
+        "homelab",
+        "dr",
+        "gitops"
+      ],
+      "timezone": "America/New_York",
+      "schemaVersion": 39,
+      "version": 3,
+      "refresh": "1m",
+      "time": {
+        "from": "now-7d",
+        "to": "now"
+      },
+      "panels": [
+        {
+          "type": "row",
+          "title": "Backups \u2014 is there a fresh artifact?",
+          "gridPos": {
+            "h": 1,
+            "w": 24,
+            "x": 0,
+            "y": 0
+          },
+          "collapsed": false
+        },
+        {
+          "type": "stat",
+          "title": "Age of the last successful run, per producer",
+          "gridPos": {
+            "h": 5,
+            "w": 12,
+            "x": 0,
+            "y": 1
+          },
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "options": {
+            "reduceOptions": {
+              "calcs": [
+                "lastNotNull"
+              ],
+              "fields": "",
+              "values": false
+            },
+            "textMode": "value_and_name",
+            "colorMode": "background"
+          },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "s",
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "green",
+                    "value": null
+                  },
+                  {
+                    "color": "orange",
+                    "value": 129600
+                  },
+                  {
+                    "color": "red",
+                    "value": 172800
+                  }
+                ]
+              }
+            },
+            "overrides": []
+          },
+          "targets": [
+            {
+              "expr": "time() - kube_cronjob_status_last_successful_time{cronjob=~\"forgejo-data-backup|forgejo-postgres-backup|daily-snapshot|weekly-backup\"}",
+              "legendFormat": "{{cronjob}}",
+              "refId": "A"
+            }
+          ]
+        },
+        {
+          "type": "stat",
+          "title": "Velero: items in the last backup",
+          "gridPos": {
+            "h": 5,
+            "w": 6,
+            "x": 12,
+            "y": 1
+          },
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "options": {
+            "reduceOptions": {
+              "calcs": [
+                "lastNotNull"
+              ],
+              "fields": "",
+              "values": false
+            },
+            "textMode": "value_and_name",
+            "colorMode": "background"
+          },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "short",
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "red",
+                    "value": null
+                  },
+                  {
+                    "color": "orange",
+                    "value": 4000
+                  },
+                  {
+                    "color": "green",
+                    "value": 6000
+                  }
+                ]
+              }
+            },
+            "overrides": []
+          },
+          "targets": [
+            {
+              "expr": "velero_backup_items_total{schedule!=\"\"}",
+              "legendFormat": "{{schedule}}",
+              "refId": "A"
+            }
+          ]
+        },
+        {
+          "type": "stat",
+          "title": "Velero: 14-day median",
+          "gridPos": {
+            "h": 5,
+            "w": 6,
+            "x": 18,
+            "y": 1
+          },
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "options": {
+            "reduceOptions": {
+              "calcs": [
+                "lastNotNull"
+              ],
+              "fields": "",
+              "values": false
+            },
+            "textMode": "value_and_name",
+            "colorMode": "background"
+          },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "short",
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "green",
+                    "value": null
+                  }
+                ]
+              }
+            },
+            "overrides": []
+          },
+          "targets": [
+            {
+              "expr": "quantile_over_time(0.5, velero_backup_items_total{schedule!=\"\"}[14d])",
+              "legendFormat": "{{schedule}}",
+              "refId": "A"
+            }
+          ]
+        },
+        {
+          "type": "timeseries",
+          "title": "Velero item count vs its own median \u2014 the shape that caught a hollow backup",
+          "gridPos": {
+            "h": 7,
+            "w": 24,
+            "x": 0,
+            "y": 6
+          },
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "short",
+              "custom": {
+                "lineWidth": 2,
+                "fillOpacity": 8
+              }
+            },
+            "overrides": []
+          },
+          "targets": [
+            {
+              "expr": "velero_backup_items_total{schedule!=\"\"}",
+              "legendFormat": "items: {{schedule}}",
+              "refId": "A"
+            }
+          ]
+        },
+        {
+          "type": "row",
+          "title": "Dead-man's switches \u2014 silence is the alarm",
+          "gridPos": {
+            "h": 1,
+            "w": 24,
+            "x": 0,
+            "y": 13
+          },
+          "collapsed": false
+        },
+        {
+          "type": "stat",
+          "title": "Seconds since the last heartbeat (alarm at 300s + retries)",
+          "gridPos": {
+            "h": 5,
+            "w": 12,
+            "x": 0,
+            "y": 14
+          },
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "options": {
+            "reduceOptions": {
+              "calcs": [
+                "lastNotNull"
+              ],
+              "fields": "",
+              "values": false
+            },
+            "textMode": "value_and_name",
+            "colorMode": "background"
+          },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "s",
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "green",
+                    "value": null
+                  },
+                  {
+                    "color": "red",
+                    "value": 900
+                  }
+                ]
+              }
+            },
+            "overrides": []
+          },
+          "targets": [
+            {
+              "expr": "time() - kube_cronjob_status_last_successful_time{cronjob=~\"watchdog-heartbeat|dns-authority-check\"}",
+              "legendFormat": "{{cronjob}}",
+              "refId": "A"
+            }
+          ]
+        },
+        {
+          "type": "stat",
+          "title": "Freshness check: failures on the newest run",
+          "gridPos": {
+            "h": 5,
+            "w": 12,
+            "x": 12,
+            "y": 14
+          },
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "options": {
+            "reduceOptions": {
+              "calcs": [
+                "lastNotNull"
+              ],
+              "fields": "",
+              "values": false
+            },
+            "textMode": "value_and_name",
+            "colorMode": "background"
+          },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "short",
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "green",
+                    "value": null
+                  },
+                  {
+                    "color": "red",
+                    "value": 1
+                  }
+                ]
+              }
+            },
+            "overrides": []
+          },
+          "targets": [
+            {
+              "expr": "max(kube_job_status_failed{namespace=\"forgejo\", job_name=~\"backup-freshness-check-.*\"})",
+              "legendFormat": "failed",
+              "refId": "A"
+            }
+          ]
+        },
+        {
+          "type": "row",
+          "title": "Delivery \u2014 is git actually in effect?",
+          "gridPos": {
+            "h": 1,
+            "w": 24,
+            "x": 0,
+            "y": 19
+          },
+          "collapsed": false
+        },
+        {
+          "type": "stat",
+          "title": "Applications by sync status",
+          "gridPos": {
+            "h": 5,
+            "w": 8,
+            "x": 0,
+            "y": 20
+          },
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "options": {
+            "reduceOptions": {
+              "calcs": [
+                "lastNotNull"
+              ],
+              "fields": "",
+              "values": false
+            },
+            "textMode": "value_and_name",
+            "colorMode": "background"
+          },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "short",
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "green",
+                    "value": null
+                  }
+                ]
+              }
+            },
+            "overrides": []
+          },
+          "targets": [
+            {
+              "expr": "count by (sync_status) (argocd_app_info)",
+              "legendFormat": "{{sync_status}}",
+              "refId": "A"
+            }
+          ]
+        },
+        {
+          "type": "stat",
+          "title": "Applications by health",
+          "gridPos": {
+            "h": 5,
+            "w": 8,
+            "x": 8,
+            "y": 20
+          },
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "options": {
+            "reduceOptions": {
+              "calcs": [
+                "lastNotNull"
+              ],
+              "fields": "",
+              "values": false
+            },
+            "textMode": "value_and_name",
+            "colorMode": "background"
+          },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "short",
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "green",
+                    "value": null
+                  }
+                ]
+              }
+            },
+            "overrides": []
+          },
+          "targets": [
+            {
+              "expr": "count by (health_status) (argocd_app_info)",
+              "legendFormat": "{{health_status}}",
+              "refId": "A"
+            }
+          ]
+        },
+        {
+          "type": "stat",
+          "title": "Failed syncs recorded (all time)",
+          "gridPos": {
+            "h": 5,
+            "w": 8,
+            "x": 16,
+            "y": 20
+          },
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "options": {
+            "reduceOptions": {
+              "calcs": [
+                "lastNotNull"
+              ],
+              "fields": "",
+              "values": false
+            },
+            "textMode": "value_and_name",
+            "colorMode": "background"
+          },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "short",
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "green",
+                    "value": null
+                  },
+                  {
+                    "color": "red",
+                    "value": 1
+                  }
+                ]
+              }
+            },
+            "overrides": []
+          },
+          "targets": [
+            {
+              "expr": "sum by (name) (argocd_app_sync_total{phase=~\"Failed|Error\"})",
+              "legendFormat": "{{name}}",
+              "refId": "A"
+            }
+          ]
+        },
+        {
+          "type": "timeseries",
+          "title": "OutOfSync applications over time \u2014 kyverno/loki/longhorn are known-benign",
+          "gridPos": {
+            "h": 7,
+            "w": 24,
+            "x": 0,
+            "y": 25
+          },
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "short",
+              "custom": {
+                "lineWidth": 2,
+                "fillOpacity": 8
+              }
+            },
+            "overrides": []
+          },
+          "targets": [
+            {
+              "expr": "count by (name) (argocd_app_info{sync_status=\"OutOfSync\"})",
+              "legendFormat": "{{name}}",
+              "refId": "A"
+            }
+          ]
+        },
+        {
+          "type": "row",
+          "title": "Storage \u2014 the failure this cluster keeps having",
+          "gridPos": {
+            "h": 1,
+            "w": 24,
+            "x": 0,
+            "y": 32
+          },
+          "collapsed": false
+        },
+        {
+          "type": "stat",
+          "title": "Longhorn volumes by robustness",
+          "gridPos": {
+            "h": 5,
+            "w": 12,
+            "x": 0,
+            "y": 33
+          },
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "options": {
+            "reduceOptions": {
+              "calcs": [
+                "lastNotNull"
+              ],
+              "fields": "",
+              "values": false
+            },
+            "textMode": "value_and_name",
+            "colorMode": "background"
+          },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "short",
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "green",
+                    "value": null
+                  }
+                ]
+              }
+            },
+            "overrides": []
+          },
+          "targets": [
+            {
+              "expr": "count by (robustness) (longhorn_volume_robustness)",
+              "legendFormat": "{{robustness}}",
+              "refId": "A"
+            }
+          ]
+        },
+        {
+          "type": "timeseries",
+          "title": "Instance-manager CPU \u2014 2 cores pegged is the EIO-while-healthy signature",
+          "gridPos": {
+            "h": 7,
+            "w": 12,
+            "x": 12,
+            "y": 33
+          },
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "short",
+              "custom": {
+                "lineWidth": 2,
+                "fillOpacity": 8
+              }
+            },
+            "overrides": []
+          },
+          "targets": [
+            {
+              "expr": "sum by (pod) (rate(container_cpu_usage_seconds_total{namespace=\"longhorn-system\", pod=~\"instance-manager-.*\"}[5m]))",
+              "legendFormat": "{{pod}}",
+              "refId": "A"
+            }
+          ]
+        },
+        {
+          "type": "row",
+          "title": "SLOs \u2014 how much error budget is left?",
+          "gridPos": {
+            "h": 1,
+            "w": 24,
+            "x": 0,
+            "y": 40
+          },
+          "collapsed": false
+        },
+        {
+          "type": "stat",
+          "title": "Error budget remaining (trailing 3d)",
+          "description": "Error budget remaining = 1 - (observed error ratio / (1 - objective)). ingress-nginx: 1 - slo:ingress_error_ratio:rate3d / 0.005 (99.5%). Grafana: 1 - slo:grafana_error_ratio:rate3d / 0.01 (99%). Forgejo: 1 - slo:forgejo_downtime_ratio:rate3d / 0.01 (99%). 100% = no errors at all; 0% = the window's whole allowance spent; negative = already over the line. Measured over the trailing 3d, not 30d, because 3d is the longest window the recording rules keep.",
+          "gridPos": {
+            "h": 5,
+            "w": 12,
+            "x": 0,
+            "y": 41
+          },
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "options": {
+            "reduceOptions": {
+              "calcs": [
+                "lastNotNull"
+              ],
+              "fields": "",
+              "values": false
+            },
+            "textMode": "value_and_name",
+            "colorMode": "background"
+          },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "percentunit",
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "red",
+                    "value": null
+                  },
+                  {
+                    "color": "orange",
+                    "value": 0
+                  },
+                  {
+                    "color": "green",
+                    "value": 0.25
+                  }
+                ]
+              },
+              "decimals": 1
+            },
+            "overrides": []
+          },
+          "targets": [
+            {
+              "expr": "1 - (slo:ingress_error_ratio:rate3d / 0.005)",
+              "legendFormat": "ingress-nginx (99.5%)",
+              "refId": "A"
+            },
+            {
+              "expr": "1 - (slo:grafana_error_ratio:rate3d / 0.01)",
+              "legendFormat": "Grafana (99%)",
+              "refId": "B"
+            },
+            {
+              "expr": "1 - (slo:forgejo_downtime_ratio:rate3d / 0.01)",
+              "legendFormat": "Forgejo (99%)",
+              "refId": "C"
+            }
+          ]
+        },
+        {
+          "type": "stat",
+          "title": "Burn rate right now (1h window) \u2014 1x is break-even",
+          "description": "Burn rate = error ratio / (1 - objective). 1 = the budget lasts exactly its 30-day window; 14.4 = 2% of the month's budget consumed in an hour (the fast-burn page); 6 and 3 are the other alert lines in config/slo-burn-rate.yaml.",
+          "gridPos": {
+            "h": 5,
+            "w": 12,
+            "x": 12,
+            "y": 41
+          },
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "options": {
+            "reduceOptions": {
+              "calcs": [
+                "lastNotNull"
+              ],
+              "fields": "",
+              "values": false
+            },
+            "textMode": "value_and_name",
+            "colorMode": "background"
+          },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "short",
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "green",
+                    "value": null
+                  },
+                  {
+                    "color": "orange",
+                    "value": 1
+                  },
+                  {
+                    "color": "red",
+                    "value": 6
+                  }
+                ]
+              },
+              "decimals": 2
+            },
+            "overrides": []
+          },
+          "targets": [
+            {
+              "expr": "slo:ingress_error_ratio:rate1h / 0.005",
+              "legendFormat": "ingress-nginx",
+              "refId": "A"
+            },
+            {
+              "expr": "slo:grafana_error_ratio:rate1h / 0.01",
+              "legendFormat": "Grafana",
+              "refId": "B"
+            },
+            {
+              "expr": "slo:forgejo_downtime_ratio:rate1h / 0.01",
+              "legendFormat": "Forgejo",
+              "refId": "C"
+            }
+          ]
+        },
+        {
+          "type": "timeseries",
+          "title": "ingress-nginx burn rate, every alert window",
+          "description": "Burn rate = error ratio / (1 - objective). 1 = the budget lasts exactly its 30-day window; 14.4 = 2% of the month's budget consumed in an hour (the fast-burn page); 6 and 3 are the other alert lines in config/slo-burn-rate.yaml. Short and long windows drawn together because the alerts fire on the AND of a pair \u2014 a spike in 5m alone is a blip, a spike in 5m and 1h together is the page.",
+          "gridPos": {
+            "h": 7,
+            "w": 8,
+            "x": 0,
+            "y": 46
+          },
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "short",
+              "custom": {
+                "lineWidth": 2,
+                "fillOpacity": 8
+              }
+            },
+            "overrides": []
+          },
+          "targets": [
+            {
+              "expr": "slo:ingress_error_ratio:rate5m / 0.005",
+              "legendFormat": "5m",
+              "refId": "A"
+            },
+            {
+              "expr": "slo:ingress_error_ratio:rate30m / 0.005",
+              "legendFormat": "30m",
+              "refId": "B"
+            },
+            {
+              "expr": "slo:ingress_error_ratio:rate1h / 0.005",
+              "legendFormat": "1h",
+              "refId": "C"
+            },
+            {
+              "expr": "slo:ingress_error_ratio:rate2h / 0.005",
+              "legendFormat": "2h",
+              "refId": "D"
+            },
+            {
+              "expr": "slo:ingress_error_ratio:rate6h / 0.005",
+              "legendFormat": "6h",
+              "refId": "E"
+            },
+            {
+              "expr": "slo:ingress_error_ratio:rate1d / 0.005",
+              "legendFormat": "1d",
+              "refId": "F"
+            },
+            {
+              "expr": "slo:ingress_error_ratio:rate3d / 0.005",
+              "legendFormat": "3d",
+              "refId": "G"
+            }
+          ]
+        },
+        {
+          "type": "timeseries",
+          "title": "Grafana burn rate, every alert window",
+          "description": "Burn rate = error ratio / (1 - objective). 1 = the budget lasts exactly its 30-day window; 14.4 = 2% of the month's budget consumed in an hour (the fast-burn page); 6 and 3 are the other alert lines in config/slo-burn-rate.yaml. Grafana's objective is 99%, so its budget divisor is 0.01 \u2014 the same ratio burns half as fast here as it does through ingress.",
+          "gridPos": {
+            "h": 7,
+            "w": 8,
+            "x": 8,
+            "y": 46
+          },
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "short",
+              "custom": {
+                "lineWidth": 2,
+                "fillOpacity": 8
+              }
+            },
+            "overrides": []
+          },
+          "targets": [
+            {
+              "expr": "slo:grafana_error_ratio:rate5m / 0.01",
+              "legendFormat": "5m",
+              "refId": "A"
+            },
+            {
+              "expr": "slo:grafana_error_ratio:rate30m / 0.01",
+              "legendFormat": "30m",
+              "refId": "B"
+            },
+            {
+              "expr": "slo:grafana_error_ratio:rate1h / 0.01",
+              "legendFormat": "1h",
+              "refId": "C"
+            },
+            {
+              "expr": "slo:grafana_error_ratio:rate2h / 0.01",
+              "legendFormat": "2h",
+              "refId": "D"
+            },
+            {
+              "expr": "slo:grafana_error_ratio:rate6h / 0.01",
+              "legendFormat": "6h",
+              "refId": "E"
+            },
+            {
+              "expr": "slo:grafana_error_ratio:rate1d / 0.01",
+              "legendFormat": "1d",
+              "refId": "F"
+            },
+            {
+              "expr": "slo:grafana_error_ratio:rate3d / 0.01",
+              "legendFormat": "3d",
+              "refId": "G"
+            }
+          ]
+        },
+        {
+          "type": "timeseries",
+          "title": "Forgejo burn rate \u2014 slow windows only, on purpose",
+          "description": "Burn rate = error ratio / (1 - objective). 1 = the budget lasts exactly its 30-day window; 14.4 = 2% of the month's budget consumed in an hour (the fast-burn page); 6 and 3 are the other alert lines in config/slo-burn-rate.yaml. Forgejo's SLI is the 10-minute availability probe, not HTTP counters (it runs off-cluster, ADR 0011 d3), so 5m and 30m windows do not exist and no fast-burn line can be drawn. What this shows that ForgejoDown cannot is accumulation: repeated short outages that each cleared before anyone counted them.",
+          "gridPos": {
+            "h": 7,
+            "w": 8,
+            "x": 16,
+            "y": 46
+          },
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "short",
+              "custom": {
+                "lineWidth": 2,
+                "fillOpacity": 8
+              }
+            },
+            "overrides": []
+          },
+          "targets": [
+            {
+              "expr": "slo:forgejo_downtime_ratio:rate1h / 0.01",
+              "legendFormat": "1h",
+              "refId": "A"
+            },
+            {
+              "expr": "slo:forgejo_downtime_ratio:rate6h / 0.01",
+              "legendFormat": "6h",
+              "refId": "B"
+            },
+            {
+              "expr": "slo:forgejo_downtime_ratio:rate1d / 0.01",
+              "legendFormat": "1d",
+              "refId": "C"
+            },
+            {
+              "expr": "slo:forgejo_downtime_ratio:rate3d / 0.01",
+              "legendFormat": "3d",
+              "refId": "D"
+            }
+          ]
+        },
+        {
+          "type": "row",
+          "title": "Ingress \u2014 the SLI's own vital signs",
+          "gridPos": {
+            "h": 1,
+            "w": 24,
+            "x": 0,
+            "y": 53
+          },
+          "collapsed": false
+        },
+        {
+          "type": "timeseries",
+          "title": "Requests per second, by backend service",
+          "description": "The denominator of the ingress SLO. A burn-rate spike with the request rate collapsing is a different incident from one with the rate steady: the first is 'nothing is getting through', the second is 'one backend is answering wrong'.",
+          "gridPos": {
+            "h": 7,
+            "w": 12,
+            "x": 0,
+            "y": 54
+          },
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "reqps",
+              "custom": {
+                "lineWidth": 2,
+                "fillOpacity": 8
+              }
+            },
+            "overrides": []
+          },
+          "targets": [
+            {
+              "expr": "sum by (exported_service) (rate(nginx_ingress_controller_requests[5m]))",
+              "legendFormat": "{{exported_service}}",
+              "refId": "A"
+            }
+          ]
+        },
+        {
+          "type": "timeseries",
+          "title": "5xx per second, by backend service \u2014 who is spending the budget",
+          "description": "The numerator, split the way the burn-rate alert's runbook says to split it. Series only appear once a backend has served a 5xx, so an empty panel is the healthy state, not a broken query.",
+          "gridPos": {
+            "h": 7,
+            "w": 12,
+            "x": 12,
+            "y": 54
+          },
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "reqps",
+              "custom": {
+                "lineWidth": 2,
+                "fillOpacity": 8
+              }
+            },
+            "overrides": []
+          },
+          "targets": [
+            {
+              "expr": "sum by (exported_service) (rate(nginx_ingress_controller_requests{status=~\"5..\"}[5m]))",
+              "legendFormat": "{{exported_service}}",
+              "refId": "A"
+            }
+          ]
+        },
+        {
+          "type": "timeseries",
+          "title": "Request latency through the controller (p50 / p99)",
+          "description": "Latency is deliberately NOT an SLO yet (the histogram bucket cardinality has to be checked against this 1-replica Prometheus first). It is here as context: slow and correct still burns no budget, and knowing which one you are looking at changes where you start.",
+          "gridPos": {
+            "h": 7,
+            "w": 12,
+            "x": 0,
+            "y": 61
+          },
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "s",
+              "custom": {
+                "lineWidth": 2,
+                "fillOpacity": 8
+              }
+            },
+            "overrides": []
+          },
+          "targets": [
+            {
+              "expr": "histogram_quantile(0.99, sum by (le) (rate(nginx_ingress_controller_request_duration_seconds_bucket[5m])))",
+              "legendFormat": "p99",
+              "refId": "A"
+            },
+            {
+              "expr": "histogram_quantile(0.50, sum by (le) (rate(nginx_ingress_controller_request_duration_seconds_bucket[5m])))",
+              "legendFormat": "p50",
+              "refId": "B"
+            }
+          ]
+        },
+        {
+          "type": "stat",
+          "title": "Controller restarts (cumulative)",
+          "description": "A restarting controller drops the SLI as well as the traffic: nginx_ingress_controller_requests is a per-pod counter, so a restart resets it and the ratio recovers on its own. A budget dip with restarts underneath it is one story, without them another.",
+          "gridPos": {
+            "h": 7,
+            "w": 6,
+            "x": 12,
+            "y": 61
+          },
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "options": {
+            "reduceOptions": {
+              "calcs": [
+                "lastNotNull"
+              ],
+              "fields": "",
+              "values": false
+            },
+            "textMode": "value_and_name",
+            "colorMode": "background"
+          },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "short",
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "green",
+                    "value": null
+                  },
+                  {
+                    "color": "orange",
+                    "value": 1
+                  }
+                ]
+              }
+            },
+            "overrides": []
+          },
+          "targets": [
+            {
+              "expr": "kube_pod_container_status_restarts_total{namespace=\"ingress-nginx\", container=\"controller\"}",
+              "legendFormat": "{{pod}}",
+              "refId": "A"
+            }
+          ]
+        },
+        {
+          "type": "timeseries",
+          "title": "Active connections across both controller pods",
+          "description": "Two replicas behind the .30.201 LoadBalancer. Summed rather than per-pod because the question this answers is whether the ingress tier as a whole is saturating, not which replica took which connection.",
+          "gridPos": {
+            "h": 7,
+            "w": 6,
+            "x": 18,
+            "y": 61
+          },
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "short",
+              "custom": {
+                "lineWidth": 2,
+                "fillOpacity": 8
+              }
+            },
+            "overrides": []
+          },
+          "targets": [
+            {
+              "expr": "sum(nginx_ingress_controller_nginx_process_connections{state=\"active\"})",
+              "legendFormat": "active",
+              "refId": "A"
+            }
+          ]
+        }
+      ],
+      "editable": false,
+      "description": "Provisioned from git (config/grafana-dashboards.yaml). Edits made in the UI are discarded on the next sidecar reload \u2014 change the ConfigMap instead."
+    }

@@ -1,0 +1,152 @@
+---
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: platform-availability
+  namespace: monitoring
+  labels:
+    release: kube-prometheus-stack
+    app.kubernetes.io/name: platform-availability-alerts
+spec:
+  groups:
+    - name: platform-availability
+      rules:
+        - alert: ArgoCDAppsSyncUnknown
+          expr: count(argocd_app_info{sync_status="Unknown"}) > 0
+          for: 30m
+          labels:
+            severity: warning
+          annotations:
+            summary: "{{ $value }} ArgoCD application(s) stuck in sync=Unknown for 30m"
+            description: >-
+              ArgoCD cannot load target state, so selfHeal and drift correction are
+              doing nothing. Usual causes: the source repo is unreachable, or the
+              repo-server holds a stale `.git/index.lock` after an interrupted fetch
+              (`kubectl -n argocd rollout restart deploy/argocd-repo-server`).
+
+        - alert: ArgoCDControllerDown
+          expr: |
+            up{job="argocd-application-controller-metrics"} == 0
+            or absent(up{job="argocd-application-controller-metrics"} == 1)
+          for: 10m
+          labels:
+            severity: critical
+          annotations:
+            summary: ArgoCD application-controller is not being scraped — CD state is unknown
+            description: >-
+              Nothing is reconciling desired state, or the metrics endpoint is gone.
+              Distinguishes "CD is broken" from "an app is broken".
+
+        - alert: PrometheusNotIngesting
+          expr: sum without (type) (rate(prometheus_tsdb_head_samples_appended_total{job="kube-prometheus-stack-prometheus"}[5m])) == 0
+          for: 10m
+          labels:
+            severity: critical
+          annotations:
+            summary: Prometheus is appending zero samples — monitoring is blind
+            description: >-
+              A common cause is storage: Prometheus logs `write to WAL: … input/output
+              error` while every target still reports up. Check the pod logs for
+              `input/output error` and which node its Longhorn volume is attached to.
+
+        - alert: LokiDown
+          expr: |
+            kube_statefulset_status_replicas_ready{namespace="monitoring",statefulset="loki"} == 0
+            or absent(kube_statefulset_status_replicas_ready{namespace="monitoring",statefulset="loki"})
+          for: 15m
+          labels:
+            severity: warning
+          annotations:
+            summary: Loki is not ready — log-based detection (incl. PodLogIOErrors) is off
+            description: >-
+              Logs are still collected by Alloy but have nowhere to land. Note the
+              PodLogIOErrors alert below does NOT depend on Loki (Alloy exports the
+              counter directly), so storage-corruption detection survives this.
+
+    - name: storage-corruption
+      rules:
+        - alert: PodLogIOErrors
+          expr: sum by (namespace, pod, node) (loki_process_custom_pod_log_io_errors) > 0
+          for: 2m
+          labels:
+            severity: critical
+          annotations:
+            summary: "{{ $labels.namespace }}/{{ $labels.pod }} is logging I/O errors on {{ $labels.node }}"
+            description: >-
+              A pod is reporting `input/output error` from its filesystem. Longhorn
+              will very likely still report the volume healthy — do not trust that.
+              Check the Longhorn instance-manager CPU on the node the volume is
+              attached to; a manager pegged near a full core corrupts writes for
+              every volume attached to that node (see LonghornInstanceManagerCPUHigh).
+
+    - name: longhorn-health
+      rules:
+        - alert: LonghornInstanceManagerCPUHigh
+          expr: sum by (node) (rate(container_cpu_usage_seconds_total{namespace="longhorn-system",pod=~"instance-manager.*"}[10m])) > 1
+          for: 30m
+          labels:
+            severity: warning
+          annotations:
+            summary: "Longhorn instance-manager on {{ $labels.node }} is at {{ $value | printf \"%.2f\" }} cores"
+            description: >-
+              A pegged instance-manager can corrupt writes for every volume
+              attached to that node while Longhorn keeps reporting
+              robustness=healthy. Idle baseline is roughly 0.02–0.12 cores per
+              node; sustained use above one core is the fault signature.
+              Recovery: disable Longhorn scheduling on the node, move the affected
+              pods off it so their volumes reattach elsewhere, delete the
+              instance-manager pod, then re-enable scheduling.
+              Do NOT cordon the node — the instance-manager is an ordinary pod, so
+              a cordon stops it being recreated and leaves you worse off.
+
+    - name: cilium-availability
+      rules:
+        - alert: CiliumAgentGone
+          expr: |
+            absent(kube_daemonset_status_number_ready{namespace="kube-system",daemonset="cilium"})
+            or kube_daemonset_status_number_ready{namespace="kube-system",daemonset="cilium"} == 0
+          for: 5m
+          labels:
+            severity: critical
+          annotations:
+            summary: "Cilium is not running anywhere in the cluster"
+            description: >-
+              The Cilium daemonset reports zero ready pods, or has stopped
+              existing. Established traffic will keep flowing and the nodes will
+              keep reporting Ready — do not read either as reassurance. No new
+              pod can get networking, so the first symptom users see will be a
+              rescheduled workload that never becomes ready. If the daemonset is
+              gone entirely, check whether the HelmChart CR was deleted: that
+              spawns helm-delete-cilium and uninstalls the release along with its
+              history. Recovery is a re-install from the captured
+              values file, not a rollback.
+        - alert: CiliumAgentMissingOnNode
+          expr: |
+            kube_daemonset_status_number_ready{namespace="kube-system",daemonset="cilium"}
+            < kube_daemonset_status_desired_number_scheduled{namespace="kube-system",daemonset="cilium"}
+          for: 15m
+          labels:
+            severity: warning
+          annotations:
+            summary: "Cilium is not ready on every node"
+            description: >-
+              At least one node is running without a ready Cilium agent. Pods
+              already on that node keep their networking; new ones scheduled
+              there will not get any. 15m is deliberately longer than a normal
+              agent restart or a node reboot, so this means stuck rather than
+              busy.
+        - alert: CiliumOperatorDown
+          expr: |
+            absent(kube_deployment_status_replicas_available{namespace="kube-system",deployment="cilium-operator"})
+            or kube_deployment_status_replicas_available{namespace="kube-system",deployment="cilium-operator"} == 0
+          for: 15m
+          labels:
+            severity: warning
+          annotations:
+            summary: "The Cilium operator is down"
+            description: >-
+              Warning rather than critical: existing pods and existing IPs are
+              unaffected. What stops is cluster-pool IPAM — the operator hands
+              each node its pod CIDR — so scheduling onto a node that has not yet
+              been allocated one will fail. The operator runs a single replica by
+              design, so there is no redundancy to absorb this.

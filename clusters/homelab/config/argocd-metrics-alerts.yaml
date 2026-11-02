@@ -1,0 +1,73 @@
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: argocd-application-controller-metrics
+  namespace: argocd
+  labels:
+    app.kubernetes.io/name: argocd-application-controller
+    app.kubernetes.io/part-of: argocd
+spec:
+  type: ClusterIP
+  selector:
+    app.kubernetes.io/instance: argocd
+    app.kubernetes.io/name: argocd-application-controller
+  ports:
+    - name: metrics
+      port: 8082
+      targetPort: 8082
+      protocol: TCP
+---
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: argocd-application-controller
+  namespace: argocd
+  labels:
+    release: kube-prometheus-stack
+spec:
+  namespaceSelector:
+    matchNames: [argocd]
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: argocd-application-controller
+      app.kubernetes.io/part-of: argocd
+  endpoints:
+    - port: metrics
+      path: /metrics
+      interval: 30s
+---
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: argocd-cd-pipeline
+  namespace: monitoring
+  labels:
+    release: kube-prometheus-stack
+spec:
+  groups:
+    - name: argocd.cd-pipeline
+      rules:
+        - alert: ArgoCDAppOutOfSyncStuck
+          expr: argocd_app_info{project="apps",name=~".+-dev",sync_status="OutOfSync"} == 1
+          for: 15m
+          labels:
+            severity: warning
+          annotations:
+            summary: "ArgoCD app {{ $labels.name }} OutOfSync >15m"
+            description: "{{ $labels.name }} (project apps) has been OutOfSync for 15m+ — a promote-dev commit likely did not reconcile. Check the Application and the newest pod."
+        - alert: ArgoCDAppUnhealthy
+          expr: argocd_app_info{project="apps",name=~".+-dev",health_status=~"Degraded|Missing|Unknown"} == 1
+          for: 10m
+          labels:
+            severity: warning
+          annotations:
+            summary: "ArgoCD app {{ $labels.name }} unhealthy ({{ $labels.health_status }})"
+            description: "{{ $labels.name }} health has been {{ $labels.health_status }} for 10m+."
+        - alert: ArgoCDAppSyncErrors
+          expr: increase(argocd_app_sync_total{project="apps",phase="Error"}[15m]) > 0
+          labels:
+            severity: warning
+          annotations:
+            summary: "ArgoCD sync errors on {{ $labels.name }}"
+            description: "{{ $labels.name }} logged one or more failed syncs in the last 15m."

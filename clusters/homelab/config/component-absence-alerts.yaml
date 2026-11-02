@@ -1,0 +1,268 @@
+---
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: component-absence
+  namespace: monitoring
+  labels:
+    release: kube-prometheus-stack
+    app.kubernetes.io/name: component-absence-alerts
+spec:
+  groups:
+    - name: component-absence-critical
+      rules:
+        - alert: IngressNginxDown
+          expr: |
+            absent(kube_deployment_status_replicas_available{namespace="ingress-nginx",deployment="ingress-nginx-controller"})
+            or kube_deployment_status_replicas_available{namespace="ingress-nginx",deployment="ingress-nginx-controller"} == 0
+          for: 5m
+          labels:
+            severity: critical
+          annotations:
+            summary: "ingress-nginx has no available replicas — every host is down"
+            description: >-
+              Zero available replicas, or the Deployment has stopped existing.
+              Every *.apps.example.com host is served through this controller, so
+              this is a cluster-wide outage rather than one service. Runs 2
+              replicas normally; a rolling update does not reach zero, so this
+              means genuinely down. Check the pods, then the LB IP
+              198.51.100.201 on the Cilium LB pool.
+
+        - alert: LonghornManagerGone
+          expr: |
+            absent(kube_daemonset_status_number_ready{namespace="longhorn-system",daemonset="longhorn-manager"})
+            or kube_daemonset_status_number_ready{namespace="longhorn-system",daemonset="longhorn-manager"} == 0
+          for: 10m
+          labels:
+            severity: critical
+          annotations:
+            summary: "longhorn-manager is not ready on any node"
+            description: >-
+              The storage control plane is gone. Like Cilium, already-attached
+              volumes keep serving from the kernel/engine side, so running pods
+              look healthy and this will not surface until something needs to
+              attach — a reschedule, a restart, a new PVC — which may be hours
+              later and will look unrelated. Recurring snapshot/backup jobs stop
+              silently too.
+
+        - alert: LonghornCSIPluginDegraded
+          expr: |
+            absent(kube_daemonset_status_number_ready{namespace="longhorn-system",daemonset="longhorn-csi-plugin"})
+            or (
+              kube_daemonset_status_number_ready{namespace="longhorn-system",daemonset="longhorn-csi-plugin"}
+              < kube_daemonset_status_desired_number_scheduled{namespace="longhorn-system",daemonset="longhorn-csi-plugin"}
+            )
+          for: 20m
+          labels:
+            severity: warning
+          annotations:
+            summary: "longhorn-csi-plugin is not ready on every node"
+            description: >-
+              A node without the CSI plugin cannot mount Longhorn volumes, so
+              any pod with a PVC scheduled there stays stuck in
+              ContainerCreating. 20m is longer than a node reboot or a plugin
+              restart, so this means stuck rather than busy.
+
+    - name: component-absence-warning
+      rules:
+        - alert: CertManagerDown
+          expr: |
+            absent(kube_deployment_status_replicas_available{namespace="cert-manager",deployment="cert-manager"})
+            or kube_deployment_status_replicas_available{namespace="cert-manager",deployment="cert-manager"} == 0
+          for: 15m
+          labels:
+            severity: warning
+          annotations:
+            summary: "cert-manager controller is down — certificates will not renew"
+            description: >-
+              Existing certificates keep serving, which is exactly why this is
+              silent: nothing breaks until a renewal is missed, ~30 days before
+              expiry. Pair this with IngressCertExpiringSoon below, which is the
+              backstop that catches a renewal that never happened for any reason.
+
+        - alert: CertManagerWebhookDown
+          expr: |
+            absent(kube_deployment_status_replicas_available{namespace="cert-manager",deployment="cert-manager-webhook"})
+            or kube_deployment_status_replicas_available{namespace="cert-manager",deployment="cert-manager-webhook"} == 0
+          for: 15m
+          labels:
+            severity: warning
+          annotations:
+            summary: "cert-manager webhook is down — Certificate/Issuer objects are rejected"
+            description: >-
+              The conversion/validating webhook fails closed for cert-manager's
+              own CRDs, so applying a Certificate or ClusterIssuer errors out.
+              ArgoCD will report cluster-config or cert-manager sync failures
+              that look like a manifest problem and are not.
+
+        - alert: KyvernoAdmissionControllerDown
+          expr: |
+            absent(kube_deployment_status_replicas_available{namespace="kyverno",deployment="kyverno-admission-controller"})
+            or kube_deployment_status_replicas_available{namespace="kyverno",deployment="kyverno-admission-controller"} == 0
+          for: 15m
+          labels:
+            severity: warning
+          annotations:
+            summary: "Kyverno admission controller is down — policy enforcement has stopped"
+            description: >-
+              The four policies run in Enforce in the application namespaces
+              (ci, default, *-dev, *-prod) and in Audit elsewhere. The resource
+              webhook (kyverno-resource-validating-webhook-cfg) is
+              failurePolicy=Ignore, so it fails open: while the controller is
+              down, workload admission keeps working but nothing is enforced in
+              the application namespaces and the PolicyReport stream stops.
+              Workloads that violate policy can be admitted unnoticed. Kyverno's
+              own webhooks (policy, exception, cleanup, global-context) are
+              failurePolicy=Fail, so applying a Policy or PolicyException while
+              this is down is rejected.
+              Warning rather than critical: every change that reaches `deploy`
+              has already passed the same policies in CI, so the gap is limited
+              to resources applied outside Git. Raise it to critical if that
+              stops being true.
+
+        - alert: AlloyDown
+          expr: |
+            absent(kube_daemonset_status_number_ready{namespace="monitoring",daemonset="alloy"})
+            or kube_daemonset_status_number_ready{namespace="monitoring",daemonset="alloy"} == 0
+          for: 15m
+          labels:
+            severity: warning
+          annotations:
+            summary: "Alloy is not running — log collection has stopped cluster-wide"
+            description: >-
+              Audit row: "if Alloy dies, logs stop and nothing says so". This is
+              that alert. It also takes out PodLogIOErrors in
+              config/platform-availability-alerts.yaml, which is the only signal
+              that sees silent Longhorn write corruption — Alloy exports that
+              counter itself, so losing Alloy loses the detector, not just the
+              logs.
+
+        - alert: AlloyMissingOnNode
+          expr: |
+            kube_daemonset_status_number_ready{namespace="monitoring",daemonset="alloy"}
+            < kube_daemonset_status_desired_number_scheduled{namespace="monitoring",daemonset="alloy"}
+          for: 30m
+          labels:
+            severity: warning
+          annotations:
+            summary: "Alloy is not collecting logs on every node"
+            description: >-
+              Partial blindness is worse than total blindness here, because the
+              logs that remain make the cluster look observed. The node with no
+              Alloy pod is the one whose I/O errors will not be counted.
+
+        - alert: SealedSecretsControllerDown
+          expr: |
+            absent(kube_deployment_status_replicas_available{namespace="kube-system",deployment="sealed-secrets-controller"})
+            or kube_deployment_status_replicas_available{namespace="kube-system",deployment="sealed-secrets-controller"} == 0
+          for: 15m
+          labels:
+            severity: warning
+          annotations:
+            summary: "sealed-secrets controller is down — SealedSecrets are not being unsealed"
+            description: >-
+              Already-materialised Secrets survive, so nothing running notices.
+              New or rotated SealedSecrets simply never become Secrets, and the
+              workload consuming one sits in ContainerCreating on a missing
+              Secret — a failure that reads as a typo in the manifest. Note this
+              controller is hand-installed and outside the app-of-apps (audit
+              finding 5), so ArgoCD will not resurrect it.
+
+        - alert: ForgejoRunnerDown
+          expr: |
+            absent(kube_statefulset_status_replicas_ready{namespace="forgejo-runner",statefulset="forgejo-runner"})
+            or kube_statefulset_status_replicas_ready{namespace="forgejo-runner",statefulset="forgejo-runner"} == 0
+          for: 15m
+          labels:
+            severity: warning
+          annotations:
+            summary: "The Forgejo Actions runner is down — CI has stopped silently"
+            description: >-
+              Audit row: "none — CI stops silently". With no runner, pushes to
+              main queue jobs that never start, the `promote` gate never runs,
+              and `deploy` stops advancing — so the cluster quietly freezes on
+              last-known-good while git moves on. config/promotion-lag-alerts.yaml
+              catches the downstream lag; this catches the cause.
+
+        - alert: BuildkitDown
+          expr: |
+            absent(kube_deployment_status_replicas_available{namespace="ci",deployment="buildkitd"})
+            or kube_deployment_status_replicas_available{namespace="ci",deployment="buildkitd"} == 0
+          for: 30m
+          labels:
+            severity: warning
+          annotations:
+            summary: "buildkitd is down — image builds will fail"
+            description: >-
+              The only image builder; CI jobs that build fail at the buildctl
+              step. 30m rather than 15m because losing the build cache PVC's
+              node and rescheduling is a legitimate slow restart, and this
+              blocks no running workload.
+
+        - alert: SystemUpgradeControllerDown
+          expr: |
+            absent(kube_deployment_status_replicas_available{namespace="system-upgrade",deployment="system-upgrade-controller"})
+            or kube_deployment_status_replicas_available{namespace="system-upgrade",deployment="system-upgrade-controller"} == 0
+          for: 30m
+          labels:
+            severity: warning
+          annotations:
+            summary: "system-upgrade-controller is down — k3s Plans will not apply"
+            description: >-
+              Audit row: "the thing that applies upgrades has no liveness
+              signal". A Plan sits there unapplied and the cluster stays on its
+              current k3s version indefinitely, looking healthy the whole time.
+              This is a months-scale silent failure, hence the long `for` and
+              the warning severity.
+
+    - name: certificate-expiry
+      rules:
+        - alert: IngressCertExpiringSoon
+          expr: |
+            min by (secret_name) (nginx_ingress_controller_ssl_expire_time_seconds) - time() < 21 * 86400
+            and
+            min by (secret_name) (nginx_ingress_controller_ssl_expire_time_seconds) - time() >= 7 * 86400
+          for: 1h
+          labels:
+            severity: warning
+          annotations:
+            summary: "TLS secret {{ $labels.secret_name }} expires in {{ $value | humanizeDuration }}"
+            description: >-
+              cert-manager renews at 30 days before expiry, so being inside 21
+              days means a renewal has already been missed. If this is
+              wildcard-apps-tls it is the ingress controller's
+              --default-ssl-certificate and its expiry breaks EVERY host at
+              once, not one. Check the Certificate and its CertificateRequest in
+              namespace ingress-nginx, then the DNS-01 Cloudflare token
+              (Secret cert-manager/cloudflare-api-token) — an expired or
+              revoked token is the usual cause and fails silently.
+
+        - alert: IngressCertExpiryImminent
+          expr: min by (secret_name) (nginx_ingress_controller_ssl_expire_time_seconds) - time() < 7 * 86400
+          for: 15m
+          labels:
+            severity: critical
+          annotations:
+            summary: "TLS secret {{ $labels.secret_name }} expires in {{ $value | humanizeDuration }}"
+            description: >-
+              Under a week of validity left and automatic renewal has clearly
+              not worked. If this is wildcard-apps-tls, every apps.example.com
+              host loses TLS simultaneously when it lapses. Manual path: delete
+              the Certificate's Secret to force reissue, and watch the
+              CertificateRequest for the ACME order result.
+
+        - alert: IngressCertExpiryUnmonitored
+          expr: |
+            absent(nginx_ingress_controller_ssl_expire_time_seconds)
+            or absent(nginx_ingress_controller_ssl_expire_time_seconds{host="_"})
+          for: 30m
+          labels:
+            severity: warning
+          annotations:
+            summary: "No TLS expiry metric is being scraped — certificate expiry is unwatched"
+            description: >-
+              nginx_ingress_controller_ssl_expire_time_seconds has disappeared,
+              so IngressCertExpiringSoon and IngressCertExpiryImminent cannot
+              fire and their silence means nothing. Either ingress-nginx is down
+              (see IngressNginxDown) or its metrics Service/ServiceMonitor has
+              gone. Certificate expiry is unmonitored until this clears.

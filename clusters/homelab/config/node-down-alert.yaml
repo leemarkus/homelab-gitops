@@ -1,0 +1,27 @@
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: homelab-node-down
+  namespace: monitoring
+  labels:
+    release: kube-prometheus-stack
+spec:
+  groups:
+    - name: homelab.node
+      rules:
+        - alert: NodeDown
+          expr: kube_node_status_condition{condition="Ready",status="true"} == 0
+          for: 2m
+          labels:
+            severity: critical
+          annotations:
+            summary: "Node {{ $labels.node }} is not Ready"
+            description: "{{ $labels.node }} has not been Ready for 2+ minutes — node likely offline."
+        - alert: EtcdMemberDown
+          expr: count(up{job="apiserver"} == 1) < 3
+          for: 3m
+          labels:
+            severity: warning
+          annotations:
+            summary: "Only {{ $value }} of 3 apiservers up"
+            description: "A control-plane node is down — etcd quorum is at risk if another fails."

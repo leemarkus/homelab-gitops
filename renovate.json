@@ -1,0 +1,132 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "description": [
+    "Renovate for the homelab platform.",
+    "",
+    "Renovate's output is a pull request, and a pull request runs every validation job; merging to main promotes to deploy only on green (docs/adr/0003-promotion-boundary.md). A bump is therefore reviewable before it can reach the cluster.",
+    "",
+    "What it cannot tell you: whether the bumped chart's pods actually come up. Render and admission checks pass on a chart that crashloops.",
+    "",
+    "BASE: main only. deploy is CI-managed and must never receive a commit that did not pass through main.",
+    "",
+    "SCOPE: the cluster path only (clusters/homelab).",
+    "",
+    "CADENCE: weekly, off-hours, small batches."
+  ],
+  "extends": [
+    "config:recommended",
+    ":dependencyDashboard",
+    ":semanticCommits"
+  ],
+  "baseBranches": [
+    "main"
+  ],
+  "ignorePaths": [
+    "scripts/**",
+    "tests/**",
+    "docs/**"
+  ],
+  "argocd": {
+    "description": "Chart pins live in Argo CD Application manifests as `chart:` + `targetRevision:`. The helm-template CI job derives its list from the same files, so a bump and its validation stay in step.",
+    "managerFilePatterns": [
+      "/clusters/homelab/apps/.+\\.yaml$/"
+    ]
+  },
+  "kubernetes": {
+    "description": "Image tags in plain manifests. The trivy CI job scans whatever it finds pinned here, so a Renovate image bump is CVE-checked against its baseline on the same run.",
+    "managerFilePatterns": [
+      "/clusters/homelab/.+\\.yaml$/"
+    ]
+  },
+  "schedule": [
+    "* 0-6 * * 6"
+  ],
+  "timezone": "America/New_York",
+  "prConcurrentLimit": 5,
+  "prHourlyLimit": 2,
+  "packageRules": [
+    {
+      "description": "Patch and minor for the observability stack, grouped. These bump often, rarely break, and reviewing them one at a time is how you stop reviewing them at all.",
+      "matchManagers": [
+        "argocd"
+      ],
+      "matchPackageNames": [
+        "alloy",
+        "loki",
+        "kube-prometheus-stack"
+      ],
+      "matchUpdateTypes": [
+        "minor",
+        "patch"
+      ],
+      "groupName": "observability stack",
+      "schedule": [
+        "* 0-6 * * 6"
+      ]
+    },
+    {
+      "description": "NEVER group or auto-anything for the storage and policy layers. A Longhorn major is a data-availability event, and Kyverno controls admission for the whole cluster — a bad bump there can lock out every subsequent deploy including its own rollback. Single PRs, and the description says why.",
+      "matchManagers": [
+        "argocd"
+      ],
+      "matchPackageNames": [
+        "longhorn",
+        "kyverno",
+        "cert-manager",
+        "velero"
+      ],
+      "groupName": null,
+      "prPriority": 10,
+      "prBodyNotes": [
+        ":warning: **Storage / policy / PKI component.** The CI gate proves this renders and would be admitted. It does NOT prove the pods come up. Longhorn in particular cannot be validated on the single-node pre-prod (1 replica, no rebuild path). Read the upstream changelog for CRD migrations before merging."
+      ]
+    },
+    {
+      "description": "Majors always separate and never auto-merged, whatever the component.",
+      "matchUpdateTypes": [
+        "major"
+      ],
+      "dependencyDashboardApproval": true,
+      "prPriority": 5
+    },
+    {
+      "description": "One minor at a time for cert-manager and Longhorn. Renovate's default proposes the newest minor in one PR, which once proposed cert-manager 1.18 -> 1.21 in one step. Both components carry one-way CRD/engine migrations whose upstream support is minor-to-next-minor only, so each step is its own reviewable PR.",
+      "matchManagers": [
+        "argocd"
+      ],
+      "matchPackageNames": [
+        "cert-manager",
+        "longhorn"
+      ],
+      "separateMultipleMinor": true
+    },
+    {
+      "description": "k3s itself is upgraded by system-upgrade-controller from Plans pinned to the running version — NOT by Renovate. Two things bumping the same version is the two-writable-copies problem.",
+      "matchPackageNames": [
+        "/k3s/",
+        "/rancher/k3s-upgrade/"
+      ],
+      "enabled": false
+    },
+    {
+      "description": "No auto-merge anywhere. Everything here is platform infrastructure for a single cluster with no runtime pre-prod for storage; a human reads every one.",
+      "matchPackageNames": [
+        "*"
+      ],
+      "automerge": false
+    }
+  ],
+  "vulnerabilityAlerts": {
+    "description": "Security fixes jump the queue and ignore the weekly window. Pairs with the trivy job's per-image baseline ratchet: this raises the PR, trivy proves the count went down.",
+    "enabled": true,
+    "schedule": [
+      "at any time"
+    ],
+    "prPriority": 20,
+    "labels": [
+      "security"
+    ]
+  },
+  "osvVulnerabilityAlerts": true,
+  "dependencyDashboardTitle": "Renovate — homelab platform dependencies"
+}

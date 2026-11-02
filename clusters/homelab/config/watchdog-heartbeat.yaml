@@ -1,0 +1,75 @@
+# Dead man's switch. Pushes a heartbeat to an external monitor only while
+# Prometheus reports the always-firing Watchdog alert, so a dead Prometheus or
+# Alertmanager path shows up as a missing heartbeat. The push URL comes from a
+# sealed Secret (docs/secrets.md).
+---
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: watchdog-heartbeat
+  namespace: monitoring
+  labels:
+    app.kubernetes.io/name: watchdog-heartbeat
+spec:
+  suspend: false
+  schedule: "*/2 * * * *"
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 1
+  failedJobsHistoryLimit: 3
+  startingDeadlineSeconds: 60
+  jobTemplate:
+    spec:
+      backoffLimit: 0
+      activeDeadlineSeconds: 60
+      template:
+        metadata:
+          labels:
+            app.kubernetes.io/name: watchdog-heartbeat
+        spec:
+          restartPolicy: Never
+          automountServiceAccountToken: false
+          securityContext:
+            runAsNonRoot: true
+            runAsUser: 65534
+            runAsGroup: 65534
+            seccompProfile:
+              type: RuntimeDefault
+          containers:
+            - name: heartbeat
+              image: busybox:1.37.0
+              imagePullPolicy: IfNotPresent
+              securityContext:
+                allowPrivilegeEscalation: false
+                readOnlyRootFilesystem: true
+                capabilities:
+                  drop: ["ALL"]
+              resources:
+                requests: { cpu: 10m, memory: 16Mi }
+                limits: { memory: 32Mi }
+              env:
+                - name: PUSH_URL
+                  valueFrom:
+                    secretKeyRef:
+                      name: watchdog-heartbeat
+                      key: push-url
+              command: ["/bin/sh", "-c"]
+              args:
+                - |
+                  set -eu
+                  PROM="http://kube-prometheus-stack-prometheus.monitoring.svc.cluster.local:9090"
+                  Q='ALERTS%7Balertname%3D%22Watchdog%22%2Calertstate%3D%22firing%22%7D'
+
+                  RESP=$(wget -q -T 15 -O - "${PROM}/api/v1/query?query=${Q}" 2>/dev/null || true)
+
+                  case "$RESP" in
+                    *'"alertname":"Watchdog"'*)
+                      wget -q -T 15 -O /dev/null \
+                        "${PUSH_URL}?status=up&msg=watchdog-firing" \
+                        && echo "heartbeat pushed"
+                      ;;
+                    *)
+                      echo "Watchdog not firing or Prometheus unreachable — withholding heartbeat"
+                      echo "response was: ${RESP:-<empty>}"
+                      exit 1
+                      ;;
+                  esac

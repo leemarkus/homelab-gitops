@@ -1,0 +1,63 @@
+{
+  "apiVersion": "monitoring.coreos.com/v1",
+  "kind": "PrometheusRule",
+  "metadata": {
+    "name": "website-latency-staged",
+    "namespace": "website-prod",
+    "labels": {
+      "app.kubernetes.io/name": "website",
+      "tenant": "website",
+      "env": "prod",
+      "release": "kube-prometheus-stack"
+    },
+    "annotations": {
+      "golden-path/activation": "Availability and diagnostic rules enabled with repository runbooks; latency burns staged. Live activation must verify live discovery/routing. See templates/observe/README.md in golden-path."
+    }
+  },
+  "spec": {
+    "groups": [
+      {
+        "name": "website-prod-latency-staged",
+        "interval": "30s",
+        "rules": [
+          {
+            "alert": "GoldenPathLatencyFastBurn",
+            "expr": "(((gp:slo_error_ratio:rate5m{tenant=\"website\",env=\"prod\",slo=\"latency\"} / (1 - 0.99) > 14.4) and (gp:slo_error_ratio:rate1h{tenant=\"website\",env=\"prod\",slo=\"latency\"} / (1 - 0.99) > 14.4)) or ((gp:slo_error_ratio:rate30m{tenant=\"website\",env=\"prod\",slo=\"latency\"} / (1 - 0.99) > 6) and (gp:slo_error_ratio:rate6h{tenant=\"website\",env=\"prod\",slo=\"latency\"} / (1 - 0.99) > 6))) and on() (vector(0) == 1)",
+            "for": "2m",
+            "labels": {
+              "tenant": "website",
+              "env": "prod",
+              "namespace": "website-prod",
+              "slo": "latency",
+              "severity": "critical"
+            },
+            "annotations": {
+              "summary": "website-prod latency error budget fast burn",
+              "description": "Measured fraction slower than 0.5s exceeds paired 14.4x (5m AND 1h) OR 6x (30m AND 6h) burn thresholds against the nominal 30-day objective 0.99. Critical routes to page. Low volume is a prior, not a fitted target; absent or zero traffic is not success. Check telemetry diagnostics.",
+              "runbook_url": "https://github.com/leemarkus/k8s-golden-path/blob/main/docs/runbooks/slo-burn.md",
+              "activation": "DISABLED AND EXCLUDED: Before activation, require real user traffic, measured latency distribution, verified histogram bucket and reviewed objective (ADR-0011)."
+            }
+          },
+          {
+            "alert": "GoldenPathLatencySlowBurn",
+            "expr": "(((gp:slo_error_ratio:rate2h{tenant=\"website\",env=\"prod\",slo=\"latency\"} / (1 - 0.99) > 3) and (gp:slo_error_ratio:rate1d{tenant=\"website\",env=\"prod\",slo=\"latency\"} / (1 - 0.99) > 3)) or ((gp:slo_error_ratio:rate6h{tenant=\"website\",env=\"prod\",slo=\"latency\"} / (1 - 0.99) > 1) and (gp:slo_error_ratio:rate3d{tenant=\"website\",env=\"prod\",slo=\"latency\"} / (1 - 0.99) > 1))) and on() (vector(0) == 1)",
+            "for": "15m",
+            "labels": {
+              "tenant": "website",
+              "env": "prod",
+              "namespace": "website-prod",
+              "slo": "latency",
+              "severity": "warning"
+            },
+            "annotations": {
+              "summary": "website-prod latency error budget slow burn",
+              "description": "Measured fraction slower than 0.5s exceeds paired 3x (2h AND 1d) OR 1x (6h AND 3d) burn thresholds against the nominal 30-day objective 0.99. Warning appears on the hourly status board. Low volume is a prior, not a fitted target; absent or zero traffic is not success. Check telemetry diagnostics.",
+              "runbook_url": "https://github.com/leemarkus/k8s-golden-path/blob/main/docs/runbooks/slo-burn.md",
+              "activation": "DISABLED AND EXCLUDED: Before activation, require real user traffic, measured latency distribution, verified histogram bucket and reviewed objective (ADR-0011)."
+            }
+          }
+        ]
+      }
+    ]
+  }
+}

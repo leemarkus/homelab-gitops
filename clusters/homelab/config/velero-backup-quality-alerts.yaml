@@ -1,0 +1,59 @@
+---
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: velero-backup-quality
+  namespace: monitoring
+  labels:
+    release: kube-prometheus-stack
+    app.kubernetes.io/name: velero-backup-quality
+spec:
+  groups:
+    - name: velero.backup-quality
+      rules:
+        - alert: VeleroBackupSuspiciouslySmall
+          expr: |
+            velero_backup_items_total{schedule!=""} > 0
+            and
+            velero_backup_items_total{schedule!=""}
+              < 0.6 * quantile_over_time(0.5, velero_backup_items_total{schedule!=""}[14d])
+            and
+            count_over_time(velero_backup_items_total{schedule!=""}[14d]) > 8640
+          for: 1h
+          labels:
+            severity: critical
+          annotations:
+            summary: "Velero backup for schedule {{ $labels.schedule }} captured far fewer items than usual"
+            description: >-
+              The last backup from schedule {{ $labels.schedule }} recorded
+              {{ $value | printf "%.0f" }} items, under 60% of its 14-day median.
+              The backup will report Completed and will be retained as a valid
+              restore point regardless — treat it as unusable until explained,
+              and check whether the previous night's backup is still within TTL.
+        - alert: VeleroMetricsMissing
+          expr: absent(velero_backup_items_total)
+          for: 30m
+          labels:
+            severity: warning
+          annotations:
+            summary: "Velero metrics are not being scraped"
+            description: >-
+              `velero_backup_items_total` has been absent for 30m, so
+              VeleroBackupSuspiciouslySmall cannot evaluate. Check the
+              ServiceMonitor in the velero namespace still carries
+              `release: kube-prometheus-stack`.
+        - alert: VeleroBackupStale
+          expr: |
+            time() - velero_backup_last_successful_timestamp{schedule!=""} > 26 * 3600
+            and
+            velero_backup_last_successful_timestamp{schedule!=""} > 0
+          for: 15m
+          labels:
+            severity: critical
+          annotations:
+            summary: "No successful Velero backup for schedule {{ $labels.schedule }} in over 26h"
+            description: >-
+              The last successful backup from schedule {{ $labels.schedule }}
+              finished {{ $value | humanizeDuration }} ago. Check
+              `velero backup get` for a Failed or PartiallyFailed run, and the
+              velero pod for an OOMKilled restart around 02:00 UTC.

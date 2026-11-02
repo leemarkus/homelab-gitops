@@ -1,0 +1,29 @@
+# AppProject `apps`: application workloads may deploy only into `*-dev` and
+# `*-prod` namespaces and may create no cluster-scoped resources except their
+# own Namespace.
+apiVersion: argoproj.io/v1alpha1
+kind: AppProject
+metadata:
+  name: apps
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-options: Prune=false
+spec:
+  description: Application workloads (dev/prod overlays). Deployed by ArgoCD from CI-and-human commits.
+
+  sourceRepos:
+    - https://git.example.com/platform/gitops.git
+
+  destinations:
+    - server: https://kubernetes.default.svc
+      namespace: '*-dev'
+    - server: https://kubernetes.default.svc
+      namespace: '*-prod'
+
+  clusterResourceWhitelist:
+    - group: ''
+      kind: Namespace
+
+  namespaceResourceWhitelist:
+    - group: '*'
+      kind: '*'

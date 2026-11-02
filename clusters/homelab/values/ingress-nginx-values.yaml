@@ -1,0 +1,27 @@
+controller:
+  replicaCount: 2
+  priorityClassName: platform-critical
+  service:
+    annotations:
+      lbipam.cilium.io/ips: "198.51.100.201"
+  ingressClassResource:
+    name: nginx
+    default: true
+  affinity:
+    podAntiAffinity:
+      preferredDuringSchedulingIgnoredDuringExecution:
+        - weight: 100
+          podAffinityTerm:
+            labelSelector:
+              matchLabels:
+                app.kubernetes.io/name: ingress-nginx
+                app.kubernetes.io/component: controller
+            topologyKey: kubernetes.io/hostname
+  extraArgs:
+    default-ssl-certificate: ingress-nginx/wildcard-apps-tls
+  metrics:
+    enabled: true
+    serviceMonitor:
+      enabled: true
+      additionalLabels:
+        release: kube-prometheus-stack

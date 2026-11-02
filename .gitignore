@@ -1,0 +1,9 @@
+# Local validation scratch (scripts/validate-offline.py, tests/prometheus/run.py)
+.validate-tmp/
+
+# Never commit plaintext secrets or kubeconfigs
+*.kubeconfig
+.env*
+
+# OS
+.DS_Store

@@ -1,0 +1,1798 @@
+{
+  "rule_files": [
+    "candidate-alert-rules.yaml"
+  ],
+  "evaluation_interval": "30s",
+  "fuzzy_compare": true,
+  "tests": [
+    {
+      "name": "dev availability 5m/1h below",
+      "interval": "1m",
+      "input_series": [
+        {
+          "series": "gp:slo_error_ratio:rate5m{tenant=\"website\",env=\"dev\",slo=\"availability\"}",
+          "values": "0.07128000000000007+0x20"
+        },
+        {
+          "series": "gp:slo_error_ratio:rate1h{tenant=\"website\",env=\"dev\",slo=\"availability\"}",
+          "values": "0.07128000000000007+0x20"
+        }
+      ],
+      "alert_rule_test": [
+        {
+          "eval_time": "20m",
+          "alertname": "GoldenPathAvailabilityFastBurn",
+          "exp_alerts": []
+        }
+      ]
+    },
+    {
+      "name": "dev availability 5m/1h short-only",
+      "interval": "1m",
+      "input_series": [
+        {
+          "series": "gp:slo_error_ratio:rate5m{tenant=\"website\",env=\"dev\",slo=\"availability\"}",
+          "values": "0.07272000000000006+0x20"
+        },
+        {
+          "series": "gp:slo_error_ratio:rate1h{tenant=\"website\",env=\"dev\",slo=\"availability\"}",
+          "values": "0.07128000000000007+0x20"
+        }
+      ],
+      "alert_rule_test": [
+        {
+          "eval_time": "20m",
+          "alertname": "GoldenPathAvailabilityFastBurn",
+          "exp_alerts": []
+        }
+      ]
+    },
+    {
+      "name": "dev availability 5m/1h long-only",
+      "interval": "1m",
+      "input_series": [
+        {
+          "series": "gp:slo_error_ratio:rate5m{tenant=\"website\",env=\"dev\",slo=\"availability\"}",
+          "values": "0.07128000000000007+0x20"
+        },
+        {
+          "series": "gp:slo_error_ratio:rate1h{tenant=\"website\",env=\"dev\",slo=\"availability\"}",
+          "values": "0.07272000000000006+0x20"
+        }
+      ],
+      "alert_rule_test": [
+        {
+          "eval_time": "20m",
+          "alertname": "GoldenPathAvailabilityFastBurn",
+          "exp_alerts": []
+        }
+      ]
+    },
+    {
+      "name": "dev availability 5m/1h both",
+      "interval": "1m",
+      "input_series": [
+        {
+          "series": "gp:slo_error_ratio:rate5m{tenant=\"website\",env=\"dev\",slo=\"availability\"}",
+          "values": "0.07272000000000006+0x20"
+        },
+        {
+          "series": "gp:slo_error_ratio:rate1h{tenant=\"website\",env=\"dev\",slo=\"availability\"}",
+          "values": "0.07272000000000006+0x20"
+        }
+      ],
+      "alert_rule_test": [
+        {
+          "eval_time": "20m",
+          "alertname": "GoldenPathAvailabilityFastBurn",
+          "exp_alerts": [
+            {
+              "exp_labels": {
+                "tenant": "website",
+                "env": "dev",
+                "namespace": "website-dev",
+                "slo": "availability",
+                "severity": "critical"
+              },
+              "exp_annotations": {
+                "summary": "website-dev availability error budget fast burn",
+                "description": "Measured ingress 5xx fraction exceeds paired 14.4x (5m AND 1h) OR 6x (30m AND 6h) burn thresholds against the nominal 30-day objective 0.995. Critical routes to page. Low volume is a prior, not a fitted target; absent or zero traffic is not success. Check telemetry diagnostics.",
+                "runbook_url": "https://github.com/leemarkus/k8s-golden-path/blob/main/docs/runbooks/slo-burn.md",
+                "activation": "ENABLED: repository runbook body published by the runbook stage; live activation verifies live discovery/routing and runbooks use the golden-path repository main-branch URL."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "dev availability 30m/6h below",
+      "interval": "1m",
+      "input_series": [
+        {
+          "series": "gp:slo_error_ratio:rate30m{tenant=\"website\",env=\"dev\",slo=\"availability\"}",
+          "values": "0.029700000000000025+0x20"
+        },
+        {
+          "series": "gp:slo_error_ratio:rate6h{tenant=\"website\",env=\"dev\",slo=\"availability\"}",
+          "values": "0.029700000000000025+0x20"
+        }
+      ],
+      "alert_rule_test": [
+        {
+          "eval_time": "20m",
+          "alertname": "GoldenPathAvailabilityFastBurn",
+          "exp_alerts": []
+        }
+      ]
+    },
+    {
+      "name": "dev availability 30m/6h short-only",
+      "interval": "1m",
+      "input_series": [
+        {
+          "series": "gp:slo_error_ratio:rate30m{tenant=\"website\",env=\"dev\",slo=\"availability\"}",
+          "values": "0.03030000000000003+0x20"
+        },
+        {
+          "series": "gp:slo_error_ratio:rate6h{tenant=\"website\",env=\"dev\",slo=\"availability\"}",
+          "values": "0.029700000000000025+0x20"
+        }
+      ],
+      "alert_rule_test": [
+        {
+          "eval_time": "20m",
+          "alertname": "GoldenPathAvailabilityFastBurn",
+          "exp_alerts": []
+        }
+      ]
+    },
+    {
+      "name": "dev availability 30m/6h long-only",
+      "interval": "1m",
+      "input_series": [
+        {
+          "series": "gp:slo_error_ratio:rate30m{tenant=\"website\",env=\"dev\",slo=\"availability\"}",
+          "values": "0.029700000000000025+0x20"
+        },
+        {
+          "series": "gp:slo_error_ratio:rate6h{tenant=\"website\",env=\"dev\",slo=\"availability\"}",
+          "values": "0.03030000000000003+0x20"
+        }
+      ],
+      "alert_rule_test": [
+        {
+          "eval_time": "20m",
+          "alertname": "GoldenPathAvailabilityFastBurn",
+          "exp_alerts": []
+        }
+      ]
+    },
+    {
+      "name": "dev availability 30m/6h both",
+      "interval": "1m",
+      "input_series": [
+        {
+          "series": "gp:slo_error_ratio:rate30m{tenant=\"website\",env=\"dev\",slo=\"availability\"}",
+          "values": "0.03030000000000003+0x20"
+        },
+        {
+          "series": "gp:slo_error_ratio:rate6h{tenant=\"website\",env=\"dev\",slo=\"availability\"}",
+          "values": "0.03030000000000003+0x20"
+        }
+      ],
+      "alert_rule_test": [
+        {
+          "eval_time": "20m",
+          "alertname": "GoldenPathAvailabilityFastBurn",
+          "exp_alerts": [
+            {
+              "exp_labels": {
+                "tenant": "website",
+                "env": "dev",
+                "namespace": "website-dev",
+                "slo": "availability",
+                "severity": "critical"
+              },
+              "exp_annotations": {
+                "summary": "website-dev availability error budget fast burn",
+                "description": "Measured ingress 5xx fraction exceeds paired 14.4x (5m AND 1h) OR 6x (30m AND 6h) burn thresholds against the nominal 30-day objective 0.995. Critical routes to page. Low volume is a prior, not a fitted target; absent or zero traffic is not success. Check telemetry diagnostics.",
+                "runbook_url": "https://github.com/leemarkus/k8s-golden-path/blob/main/docs/runbooks/slo-burn.md",
+                "activation": "ENABLED: repository runbook body published by the runbook stage; live activation verifies live discovery/routing and runbooks use the golden-path repository main-branch URL."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "dev availability 2h/1d below",
+      "interval": "1m",
+      "input_series": [
+        {
+          "series": "gp:slo_error_ratio:rate2h{tenant=\"website\",env=\"dev\",slo=\"availability\"}",
+          "values": "0.014850000000000012+0x20"
+        },
+        {
+          "series": "gp:slo_error_ratio:rate1d{tenant=\"website\",env=\"dev\",slo=\"availability\"}",
+          "values": "0.014850000000000012+0x20"
+        }
+      ],
+      "alert_rule_test": [
+        {
+          "eval_time": "20m",
+          "alertname": "GoldenPathAvailabilitySlowBurn",
+          "exp_alerts": []
+        }
+      ]
+    },
+    {
+      "name": "dev availability 2h/1d short-only",
+      "interval": "1m",
+      "input_series": [
+        {
+          "series": "gp:slo_error_ratio:rate2h{tenant=\"website\",env=\"dev\",slo=\"availability\"}",
+          "values": "0.015150000000000014+0x20"
+        },
+        {
+          "series": "gp:slo_error_ratio:rate1d{tenant=\"website\",env=\"dev\",slo=\"availability\"}",
+          "values": "0.014850000000000012+0x20"
+        }
+      ],
+      "alert_rule_test": [
+        {
+          "eval_time": "20m",
+          "alertname": "GoldenPathAvailabilitySlowBurn",
+          "exp_alerts": []
+        }
+      ]
+    },
+    {
+      "name": "dev availability 2h/1d long-only",
+      "interval": "1m",
+      "input_series": [
+        {
+          "series": "gp:slo_error_ratio:rate2h{tenant=\"website\",env=\"dev\",slo=\"availability\"}",
+          "values": "0.014850000000000012+0x20"
+        },
+        {
+          "series": "gp:slo_error_ratio:rate1d{tenant=\"website\",env=\"dev\",slo=\"availability\"}",
+          "values": "0.015150000000000014+0x20"
+        }
+      ],
+      "alert_rule_test": [
+        {
+          "eval_time": "20m",
+          "alertname": "GoldenPathAvailabilitySlowBurn",
+          "exp_alerts": []
+        }
+      ]
+    },
+    {
+      "name": "dev availability 2h/1d both",
+      "interval": "1m",
+      "input_series": [
+        {
+          "series": "gp:slo_error_ratio:rate2h{tenant=\"website\",env=\"dev\",slo=\"availability\"}",
+          "values": "0.015150000000000014+0x20"
+        },
+        {
+          "series": "gp:slo_error_ratio:rate1d{tenant=\"website\",env=\"dev\",slo=\"availability\"}",
+          "values": "0.015150000000000014+0x20"
+        }
+      ],
+      "alert_rule_test": [
+        {
+          "eval_time": "20m",
+          "alertname": "GoldenPathAvailabilitySlowBurn",
+          "exp_alerts": [
+            {
+              "exp_labels": {
+                "tenant": "website",
+                "env": "dev",
+                "namespace": "website-dev",
+                "slo": "availability",
+                "severity": "warning"
+              },
+              "exp_annotations": {
+                "summary": "website-dev availability error budget slow burn",
+                "description": "Measured ingress 5xx fraction exceeds paired 3x (2h AND 1d) OR 1x (6h AND 3d) burn thresholds against the nominal 30-day objective 0.995. Warning appears on the hourly status board. Low volume is a prior, not a fitted target; absent or zero traffic is not success. Check telemetry diagnostics.",
+                "runbook_url": "https://github.com/leemarkus/k8s-golden-path/blob/main/docs/runbooks/slo-burn.md",
+                "activation": "ENABLED: repository runbook body published by the runbook stage; live activation verifies live discovery/routing and runbooks use the golden-path repository main-branch URL."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "dev availability 6h/3d below",
+      "interval": "1m",
+      "input_series": [
+        {
+          "series": "gp:slo_error_ratio:rate6h{tenant=\"website\",env=\"dev\",slo=\"availability\"}",
+          "values": "0.004950000000000005+0x20"
+        },
+        {
+          "series": "gp:slo_error_ratio:rate3d{tenant=\"website\",env=\"dev\",slo=\"availability\"}",
+          "values": "0.004950000000000005+0x20"
+        }
+      ],
+      "alert_rule_test": [
+        {
+          "eval_time": "20m",
+          "alertname": "GoldenPathAvailabilitySlowBurn",
+          "exp_alerts": []
+        }
+      ]
+    },
+    {
+      "name": "dev availability 6h/3d short-only",
+      "interval": "1m",
+      "input_series": [
+        {
+          "series": "gp:slo_error_ratio:rate6h{tenant=\"website\",env=\"dev\",slo=\"availability\"}",
+          "values": "0.005050000000000004+0x20"
+        },
+        {
+          "series": "gp:slo_error_ratio:rate3d{tenant=\"website\",env=\"dev\",slo=\"availability\"}",
+          "values": "0.004950000000000005+0x20"
+        }
+      ],
+      "alert_rule_test": [
+        {
+          "eval_time": "20m",
+          "alertname": "GoldenPathAvailabilitySlowBurn",
+          "exp_alerts": []
+        }
+      ]
+    },
+    {
+      "name": "dev availability 6h/3d long-only",
+      "interval": "1m",
+      "input_series": [
+        {
+          "series": "gp:slo_error_ratio:rate6h{tenant=\"website\",env=\"dev\",slo=\"availability\"}",
+          "values": "0.004950000000000005+0x20"
+        },
+        {
+          "series": "gp:slo_error_ratio:rate3d{tenant=\"website\",env=\"dev\",slo=\"availability\"}",
+          "values": "0.005050000000000004+0x20"
+        }
+      ],
+      "alert_rule_test": [
+        {
+          "eval_time": "20m",
+          "alertname": "GoldenPathAvailabilitySlowBurn",
+          "exp_alerts": []
+        }
+      ]
+    },
+    {
+      "name": "dev availability 6h/3d both",
+      "interval": "1m",
+      "input_series": [
+        {
+          "series": "gp:slo_error_ratio:rate6h{tenant=\"website\",env=\"dev\",slo=\"availability\"}",
+          "values": "0.005050000000000004+0x20"
+        },
+        {
+          "series": "gp:slo_error_ratio:rate3d{tenant=\"website\",env=\"dev\",slo=\"availability\"}",
+          "values": "0.005050000000000004+0x20"
+        }
+      ],
+      "alert_rule_test": [
+        {
+          "eval_time": "20m",
+          "alertname": "GoldenPathAvailabilitySlowBurn",
+          "exp_alerts": [
+            {
+              "exp_labels": {
+                "tenant": "website",
+                "env": "dev",
+                "namespace": "website-dev",
+                "slo": "availability",
+                "severity": "warning"
+              },
+              "exp_annotations": {
+                "summary": "website-dev availability error budget slow burn",
+                "description": "Measured ingress 5xx fraction exceeds paired 3x (2h AND 1d) OR 1x (6h AND 3d) burn thresholds against the nominal 30-day objective 0.995. Warning appears on the hourly status board. Low volume is a prior, not a fitted target; absent or zero traffic is not success. Check telemetry diagnostics.",
+                "runbook_url": "https://github.com/leemarkus/k8s-golden-path/blob/main/docs/runbooks/slo-burn.md",
+                "activation": "ENABLED: repository runbook body published by the runbook stage; live activation verifies live discovery/routing and runbooks use the golden-path repository main-branch URL."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "dev latency 5m/1h below",
+      "interval": "1m",
+      "input_series": [
+        {
+          "series": "gp:slo_error_ratio:rate5m{tenant=\"website\",env=\"dev\",slo=\"latency\"}",
+          "values": "0.14256000000000013+0x20"
+        },
+        {
+          "series": "gp:slo_error_ratio:rate1h{tenant=\"website\",env=\"dev\",slo=\"latency\"}",
+          "values": "0.14256000000000013+0x20"
+        }
+      ],
+      "alert_rule_test": [
+        {
+          "eval_time": "20m",
+          "alertname": "GoldenPathLatencyFastBurn",
+          "exp_alerts": []
+        }
+      ]
+    },
+    {
+      "name": "dev latency 5m/1h short-only",
+      "interval": "1m",
+      "input_series": [
+        {
+          "series": "gp:slo_error_ratio:rate5m{tenant=\"website\",env=\"dev\",slo=\"latency\"}",
+          "values": "0.14544000000000012+0x20"
+        },
+        {
+          "series": "gp:slo_error_ratio:rate1h{tenant=\"website\",env=\"dev\",slo=\"latency\"}",
+          "values": "0.14256000000000013+0x20"
+        }
+      ],
+      "alert_rule_test": [
+        {
+          "eval_time": "20m",
+          "alertname": "GoldenPathLatencyFastBurn",
+          "exp_alerts": []
+        }
+      ]
+    },
+    {
+      "name": "dev latency 5m/1h long-only",
+      "interval": "1m",
+      "input_series": [
+        {
+          "series": "gp:slo_error_ratio:rate5m{tenant=\"website\",env=\"dev\",slo=\"latency\"}",
+          "values": "0.14256000000000013+0x20"
+        },
+        {
+          "series": "gp:slo_error_ratio:rate1h{tenant=\"website\",env=\"dev\",slo=\"latency\"}",
+          "values": "0.14544000000000012+0x20"
+        }
+      ],
+      "alert_rule_test": [
+        {
+          "eval_time": "20m",
+          "alertname": "GoldenPathLatencyFastBurn",
+          "exp_alerts": []
+        }
+      ]
+    },
+    {
+      "name": "dev latency 5m/1h both",
+      "interval": "1m",
+      "input_series": [
+        {
+          "series": "gp:slo_error_ratio:rate5m{tenant=\"website\",env=\"dev\",slo=\"latency\"}",
+          "values": "0.14544000000000012+0x20"
+        },
+        {
+          "series": "gp:slo_error_ratio:rate1h{tenant=\"website\",env=\"dev\",slo=\"latency\"}",
+          "values": "0.14544000000000012+0x20"
+        }
+      ],
+      "alert_rule_test": [
+        {
+          "eval_time": "20m",
+          "alertname": "GoldenPathLatencyFastBurn",
+          "exp_alerts": [
+            {
+              "exp_labels": {
+                "tenant": "website",
+                "env": "dev",
+                "namespace": "website-dev",
+                "slo": "latency",
+                "severity": "critical"
+              },
+              "exp_annotations": {
+                "summary": "website-dev latency error budget fast burn",
+                "description": "Measured fraction slower than 0.5s exceeds paired 14.4x (5m AND 1h) OR 6x (30m AND 6h) burn thresholds against the nominal 30-day objective 0.99. Critical routes to page. Low volume is a prior, not a fitted target; absent or zero traffic is not success. Check telemetry diagnostics.",
+                "runbook_url": "https://github.com/leemarkus/k8s-golden-path/blob/main/docs/runbooks/slo-burn.md",
+                "activation": "DISABLED AND EXCLUDED: Before activation, require real user traffic, measured latency distribution, verified histogram bucket and reviewed objective (ADR-0011)."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "dev latency 30m/6h below",
+      "interval": "1m",
+      "input_series": [
+        {
+          "series": "gp:slo_error_ratio:rate30m{tenant=\"website\",env=\"dev\",slo=\"latency\"}",
+          "values": "0.05940000000000005+0x20"
+        },
+        {
+          "series": "gp:slo_error_ratio:rate6h{tenant=\"website\",env=\"dev\",slo=\"latency\"}",
+          "values": "0.05940000000000005+0x20"
+        }
+      ],
+      "alert_rule_test": [
+        {
+          "eval_time": "20m",
+          "alertname": "GoldenPathLatencyFastBurn",
+          "exp_alerts": []
+        }
+      ]
+    },
+    {
+      "name": "dev latency 30m/6h short-only",
+      "interval": "1m",
+      "input_series": [
+        {
+          "series": "gp:slo_error_ratio:rate30m{tenant=\"website\",env=\"dev\",slo=\"latency\"}",
+          "values": "0.06060000000000006+0x20"
+        },
+        {
+          "series": "gp:slo_error_ratio:rate6h{tenant=\"website\",env=\"dev\",slo=\"latency\"}",
+          "values": "0.05940000000000005+0x20"
+        }
+      ],
+      "alert_rule_test": [
+        {
+          "eval_time": "20m",
+          "alertname": "GoldenPathLatencyFastBurn",
+          "exp_alerts": []
+        }
+      ]
+    },
+    {
+      "name": "dev latency 30m/6h long-only",
+      "interval": "1m",
+      "input_series": [
+        {
+          "series": "gp:slo_error_ratio:rate30m{tenant=\"website\",env=\"dev\",slo=\"latency\"}",
+          "values": "0.05940000000000005+0x20"
+        },
+        {
+          "series": "gp:slo_error_ratio:rate6h{tenant=\"website\",env=\"dev\",slo=\"latency\"}",
+          "values": "0.06060000000000006+0x20"
+        }
+      ],
+      "alert_rule_test": [
+        {
+          "eval_time": "20m",
+          "alertname": "GoldenPathLatencyFastBurn",
+          "exp_alerts": []
+        }
+      ]
+    },
+    {
+      "name": "dev latency 30m/6h both",
+      "interval": "1m",
+      "input_series": [
+        {
+          "series": "gp:slo_error_ratio:rate30m{tenant=\"website\",env=\"dev\",slo=\"latency\"}",
+          "values": "0.06060000000000006+0x20"
+        },
+        {
+          "series": "gp:slo_error_ratio:rate6h{tenant=\"website\",env=\"dev\",slo=\"latency\"}",
+          "values": "0.06060000000000006+0x20"
+        }
+      ],
+      "alert_rule_test": [
+        {
+          "eval_time": "20m",
+          "alertname": "GoldenPathLatencyFastBurn",
+          "exp_alerts": [
+            {
+              "exp_labels": {
+                "tenant": "website",
+                "env": "dev",
+                "namespace": "website-dev",
+                "slo": "latency",
+                "severity": "critical"
+              },
+              "exp_annotations": {
+                "summary": "website-dev latency error budget fast burn",
+                "description": "Measured fraction slower than 0.5s exceeds paired 14.4x (5m AND 1h) OR 6x (30m AND 6h) burn thresholds against the nominal 30-day objective 0.99. Critical routes to page. Low volume is a prior, not a fitted target; absent or zero traffic is not success. Check telemetry diagnostics.",
+                "runbook_url": "https://github.com/leemarkus/k8s-golden-path/blob/main/docs/runbooks/slo-burn.md",
+                "activation": "DISABLED AND EXCLUDED: Before activation, require real user traffic, measured latency distribution, verified histogram bucket and reviewed objective (ADR-0011)."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "dev latency 2h/1d below",
+      "interval": "1m",
+      "input_series": [
+        {
+          "series": "gp:slo_error_ratio:rate2h{tenant=\"website\",env=\"dev\",slo=\"latency\"}",
+          "values": "0.029700000000000025+0x20"
+        },
+        {
+          "series": "gp:slo_error_ratio:rate1d{tenant=\"website\",env=\"dev\",slo=\"latency\"}",
+          "values": "0.029700000000000025+0x20"
+        }
+      ],
+      "alert_rule_test": [
+        {
+          "eval_time": "20m",
+          "alertname": "GoldenPathLatencySlowBurn",
+          "exp_alerts": []
+        }
+      ]
+    },
+    {
+      "name": "dev latency 2h/1d short-only",
+      "interval": "1m",
+      "input_series": [
+        {
+          "series": "gp:slo_error_ratio:rate2h{tenant=\"website\",env=\"dev\",slo=\"latency\"}",
+          "values": "0.03030000000000003+0x20"
+        },
+        {
+          "series": "gp:slo_error_ratio:rate1d{tenant=\"website\",env=\"dev\",slo=\"latency\"}",
+          "values": "0.029700000000000025+0x20"
+        }
+      ],
+      "alert_rule_test": [
+        {
+          "eval_time": "20m",
+          "alertname": "GoldenPathLatencySlowBurn",
+          "exp_alerts": []
+        }
+      ]
+    },
+    {
+      "name": "dev latency 2h/1d long-only",
+      "interval": "1m",
+      "input_series": [
+        {
+          "series": "gp:slo_error_ratio:rate2h{tenant=\"website\",env=\"dev\",slo=\"latency\"}",
+          "values": "0.029700000000000025+0x20"
+        },
+        {
+          "series": "gp:slo_error_ratio:rate1d{tenant=\"website\",env=\"dev\",slo=\"latency\"}",
+          "values": "0.03030000000000003+0x20"
+        }
+      ],
+      "alert_rule_test": [
+        {
+          "eval_time": "20m",
+          "alertname": "GoldenPathLatencySlowBurn",
+          "exp_alerts": []
+        }
+      ]
+    },
+    {
+      "name": "dev latency 2h/1d both",
+      "interval": "1m",
+      "input_series": [
+        {
+          "series": "gp:slo_error_ratio:rate2h{tenant=\"website\",env=\"dev\",slo=\"latency\"}",
+          "values": "0.03030000000000003+0x20"
+        },
+        {
+          "series": "gp:slo_error_ratio:rate1d{tenant=\"website\",env=\"dev\",slo=\"latency\"}",
+          "values": "0.03030000000000003+0x20"
+        }
+      ],
+      "alert_rule_test": [
+        {
+          "eval_time": "20m",
+          "alertname": "GoldenPathLatencySlowBurn",
+          "exp_alerts": [
+            {
+              "exp_labels": {
+                "tenant": "website",
+                "env": "dev",
+                "namespace": "website-dev",
+                "slo": "latency",
+                "severity": "warning"
+              },
+              "exp_annotations": {
+                "summary": "website-dev latency error budget slow burn",
+                "description": "Measured fraction slower than 0.5s exceeds paired 3x (2h AND 1d) OR 1x (6h AND 3d) burn thresholds against the nominal 30-day objective 0.99. Warning appears on the hourly status board. Low volume is a prior, not a fitted target; absent or zero traffic is not success. Check telemetry diagnostics.",
+                "runbook_url": "https://github.com/leemarkus/k8s-golden-path/blob/main/docs/runbooks/slo-burn.md",
+                "activation": "DISABLED AND EXCLUDED: Before activation, require real user traffic, measured latency distribution, verified histogram bucket and reviewed objective (ADR-0011)."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "dev latency 6h/3d below",
+      "interval": "1m",
+      "input_series": [
+        {
+          "series": "gp:slo_error_ratio:rate6h{tenant=\"website\",env=\"dev\",slo=\"latency\"}",
+          "values": "0.00990000000000001+0x20"
+        },
+        {
+          "series": "gp:slo_error_ratio:rate3d{tenant=\"website\",env=\"dev\",slo=\"latency\"}",
+          "values": "0.00990000000000001+0x20"
+        }
+      ],
+      "alert_rule_test": [
+        {
+          "eval_time": "20m",
+          "alertname": "GoldenPathLatencySlowBurn",
+          "exp_alerts": []
+        }
+      ]
+    },
+    {
+      "name": "dev latency 6h/3d short-only",
+      "interval": "1m",
+      "input_series": [
+        {
+          "series": "gp:slo_error_ratio:rate6h{tenant=\"website\",env=\"dev\",slo=\"latency\"}",
+          "values": "0.010100000000000008+0x20"
+        },
+        {
+          "series": "gp:slo_error_ratio:rate3d{tenant=\"website\",env=\"dev\",slo=\"latency\"}",
+          "values": "0.00990000000000001+0x20"
+        }
+      ],
+      "alert_rule_test": [
+        {
+          "eval_time": "20m",
+          "alertname": "GoldenPathLatencySlowBurn",
+          "exp_alerts": []
+        }
+      ]
+    },
+    {
+      "name": "dev latency 6h/3d long-only",
+      "interval": "1m",
+      "input_series": [
+        {
+          "series": "gp:slo_error_ratio:rate6h{tenant=\"website\",env=\"dev\",slo=\"latency\"}",
+          "values": "0.00990000000000001+0x20"
+        },
+        {
+          "series": "gp:slo_error_ratio:rate3d{tenant=\"website\",env=\"dev\",slo=\"latency\"}",
+          "values": "0.010100000000000008+0x20"
+        }
+      ],
+      "alert_rule_test": [
+        {
+          "eval_time": "20m",
+          "alertname": "GoldenPathLatencySlowBurn",
+          "exp_alerts": []
+        }
+      ]
+    },
+    {
+      "name": "dev latency 6h/3d both",
+      "interval": "1m",
+      "input_series": [
+        {
+          "series": "gp:slo_error_ratio:rate6h{tenant=\"website\",env=\"dev\",slo=\"latency\"}",
+          "values": "0.010100000000000008+0x20"
+        },
+        {
+          "series": "gp:slo_error_ratio:rate3d{tenant=\"website\",env=\"dev\",slo=\"latency\"}",
+          "values": "0.010100000000000008+0x20"
+        }
+      ],
+      "alert_rule_test": [
+        {
+          "eval_time": "20m",
+          "alertname": "GoldenPathLatencySlowBurn",
+          "exp_alerts": [
+            {
+              "exp_labels": {
+                "tenant": "website",
+                "env": "dev",
+                "namespace": "website-dev",
+                "slo": "latency",
+                "severity": "warning"
+              },
+              "exp_annotations": {
+                "summary": "website-dev latency error budget slow burn",
+                "description": "Measured fraction slower than 0.5s exceeds paired 3x (2h AND 1d) OR 1x (6h AND 3d) burn thresholds against the nominal 30-day objective 0.99. Warning appears on the hourly status board. Low volume is a prior, not a fitted target; absent or zero traffic is not success. Check telemetry diagnostics.",
+                "runbook_url": "https://github.com/leemarkus/k8s-golden-path/blob/main/docs/runbooks/slo-burn.md",
+                "activation": "DISABLED AND EXCLUDED: Before activation, require real user traffic, measured latency distribution, verified histogram bucket and reviewed objective (ADR-0011)."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "prod availability 5m/1h below",
+      "interval": "1m",
+      "input_series": [
+        {
+          "series": "gp:slo_error_ratio:rate5m{tenant=\"website\",env=\"prod\",slo=\"availability\"}",
+          "values": "0.07128000000000007+0x20"
+        },
+        {
+          "series": "gp:slo_error_ratio:rate1h{tenant=\"website\",env=\"prod\",slo=\"availability\"}",
+          "values": "0.07128000000000007+0x20"
+        }
+      ],
+      "alert_rule_test": [
+        {
+          "eval_time": "20m",
+          "alertname": "GoldenPathAvailabilityFastBurn",
+          "exp_alerts": []
+        }
+      ]
+    },
+    {
+      "name": "prod availability 5m/1h short-only",
+      "interval": "1m",
+      "input_series": [
+        {
+          "series": "gp:slo_error_ratio:rate5m{tenant=\"website\",env=\"prod\",slo=\"availability\"}",
+          "values": "0.07272000000000006+0x20"
+        },
+        {
+          "series": "gp:slo_error_ratio:rate1h{tenant=\"website\",env=\"prod\",slo=\"availability\"}",
+          "values": "0.07128000000000007+0x20"
+        }
+      ],
+      "alert_rule_test": [
+        {
+          "eval_time": "20m",
+          "alertname": "GoldenPathAvailabilityFastBurn",
+          "exp_alerts": []
+        }
+      ]
+    },
+    {
+      "name": "prod availability 5m/1h long-only",
+      "interval": "1m",
+      "input_series": [
+        {
+          "series": "gp:slo_error_ratio:rate5m{tenant=\"website\",env=\"prod\",slo=\"availability\"}",
+          "values": "0.07128000000000007+0x20"
+        },
+        {
+          "series": "gp:slo_error_ratio:rate1h{tenant=\"website\",env=\"prod\",slo=\"availability\"}",
+          "values": "0.07272000000000006+0x20"
+        }
+      ],
+      "alert_rule_test": [
+        {
+          "eval_time": "20m",
+          "alertname": "GoldenPathAvailabilityFastBurn",
+          "exp_alerts": []
+        }
+      ]
+    },
+    {
+      "name": "prod availability 5m/1h both",
+      "interval": "1m",
+      "input_series": [
+        {
+          "series": "gp:slo_error_ratio:rate5m{tenant=\"website\",env=\"prod\",slo=\"availability\"}",
+          "values": "0.07272000000000006+0x20"
+        },
+        {
+          "series": "gp:slo_error_ratio:rate1h{tenant=\"website\",env=\"prod\",slo=\"availability\"}",
+          "values": "0.07272000000000006+0x20"
+        }
+      ],
+      "alert_rule_test": [
+        {
+          "eval_time": "20m",
+          "alertname": "GoldenPathAvailabilityFastBurn",
+          "exp_alerts": [
+            {
+              "exp_labels": {
+                "tenant": "website",
+                "env": "prod",
+                "namespace": "website-prod",
+                "slo": "availability",
+                "severity": "critical"
+              },
+              "exp_annotations": {
+                "summary": "website-prod availability error budget fast burn",
+                "description": "Measured ingress 5xx fraction exceeds paired 14.4x (5m AND 1h) OR 6x (30m AND 6h) burn thresholds against the nominal 30-day objective 0.995. Critical routes to page. Low volume is a prior, not a fitted target; absent or zero traffic is not success. Check telemetry diagnostics.",
+                "runbook_url": "https://github.com/leemarkus/k8s-golden-path/blob/main/docs/runbooks/slo-burn.md",
+                "activation": "ENABLED: repository runbook body published by the runbook stage; live activation verifies live discovery/routing and runbooks use the golden-path repository main-branch URL."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "prod availability 30m/6h below",
+      "interval": "1m",
+      "input_series": [
+        {
+          "series": "gp:slo_error_ratio:rate30m{tenant=\"website\",env=\"prod\",slo=\"availability\"}",
+          "values": "0.029700000000000025+0x20"
+        },
+        {
+          "series": "gp:slo_error_ratio:rate6h{tenant=\"website\",env=\"prod\",slo=\"availability\"}",
+          "values": "0.029700000000000025+0x20"
+        }
+      ],
+      "alert_rule_test": [
+        {
+          "eval_time": "20m",
+          "alertname": "GoldenPathAvailabilityFastBurn",
+          "exp_alerts": []
+        }
+      ]
+    },
+    {
+      "name": "prod availability 30m/6h short-only",
+      "interval": "1m",
+      "input_series": [
+        {
+          "series": "gp:slo_error_ratio:rate30m{tenant=\"website\",env=\"prod\",slo=\"availability\"}",
+          "values": "0.03030000000000003+0x20"
+        },
+        {
+          "series": "gp:slo_error_ratio:rate6h{tenant=\"website\",env=\"prod\",slo=\"availability\"}",
+          "values": "0.029700000000000025+0x20"
+        }
+      ],
+      "alert_rule_test": [
+        {
+          "eval_time": "20m",
+          "alertname": "GoldenPathAvailabilityFastBurn",
+          "exp_alerts": []
+        }
+      ]
+    },
+    {
+      "name": "prod availability 30m/6h long-only",
+      "interval": "1m",
+      "input_series": [
+        {
+          "series": "gp:slo_error_ratio:rate30m{tenant=\"website\",env=\"prod\",slo=\"availability\"}",
+          "values": "0.029700000000000025+0x20"
+        },
+        {
+          "series": "gp:slo_error_ratio:rate6h{tenant=\"website\",env=\"prod\",slo=\"availability\"}",
+          "values": "0.03030000000000003+0x20"
+        }
+      ],
+      "alert_rule_test": [
+        {
+          "eval_time": "20m",
+          "alertname": "GoldenPathAvailabilityFastBurn",
+          "exp_alerts": []
+        }
+      ]
+    },
+    {
+      "name": "prod availability 30m/6h both",
+      "interval": "1m",
+      "input_series": [
+        {
+          "series": "gp:slo_error_ratio:rate30m{tenant=\"website\",env=\"prod\",slo=\"availability\"}",
+          "values": "0.03030000000000003+0x20"
+        },
+        {
+          "series": "gp:slo_error_ratio:rate6h{tenant=\"website\",env=\"prod\",slo=\"availability\"}",
+          "values": "0.03030000000000003+0x20"
+        }
+      ],
+      "alert_rule_test": [
+        {
+          "eval_time": "20m",
+          "alertname": "GoldenPathAvailabilityFastBurn",
+          "exp_alerts": [
+            {
+              "exp_labels": {
+                "tenant": "website",
+                "env": "prod",
+                "namespace": "website-prod",
+                "slo": "availability",
+                "severity": "critical"
+              },
+              "exp_annotations": {
+                "summary": "website-prod availability error budget fast burn",
+                "description": "Measured ingress 5xx fraction exceeds paired 14.4x (5m AND 1h) OR 6x (30m AND 6h) burn thresholds against the nominal 30-day objective 0.995. Critical routes to page. Low volume is a prior, not a fitted target; absent or zero traffic is not success. Check telemetry diagnostics.",
+                "runbook_url": "https://github.com/leemarkus/k8s-golden-path/blob/main/docs/runbooks/slo-burn.md",
+                "activation": "ENABLED: repository runbook body published by the runbook stage; live activation verifies live discovery/routing and runbooks use the golden-path repository main-branch URL."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "prod availability 2h/1d below",
+      "interval": "1m",
+      "input_series": [
+        {
+          "series": "gp:slo_error_ratio:rate2h{tenant=\"website\",env=\"prod\",slo=\"availability\"}",
+          "values": "0.014850000000000012+0x20"
+        },
+        {
+          "series": "gp:slo_error_ratio:rate1d{tenant=\"website\",env=\"prod\",slo=\"availability\"}",
+          "values": "0.014850000000000012+0x20"
+        }
+      ],
+      "alert_rule_test": [
+        {
+          "eval_time": "20m",
+          "alertname": "GoldenPathAvailabilitySlowBurn",
+          "exp_alerts": []
+        }
+      ]
+    },
+    {
+      "name": "prod availability 2h/1d short-only",
+      "interval": "1m",
+      "input_series": [
+        {
+          "series": "gp:slo_error_ratio:rate2h{tenant=\"website\",env=\"prod\",slo=\"availability\"}",
+          "values": "0.015150000000000014+0x20"
+        },
+        {
+          "series": "gp:slo_error_ratio:rate1d{tenant=\"website\",env=\"prod\",slo=\"availability\"}",
+          "values": "0.014850000000000012+0x20"
+        }
+      ],
+      "alert_rule_test": [
+        {
+          "eval_time": "20m",
+          "alertname": "GoldenPathAvailabilitySlowBurn",
+          "exp_alerts": []
+        }
+      ]
+    },
+    {
+      "name": "prod availability 2h/1d long-only",
+      "interval": "1m",
+      "input_series": [
+        {
+          "series": "gp:slo_error_ratio:rate2h{tenant=\"website\",env=\"prod\",slo=\"availability\"}",
+          "values": "0.014850000000000012+0x20"
+        },
+        {
+          "series": "gp:slo_error_ratio:rate1d{tenant=\"website\",env=\"prod\",slo=\"availability\"}",
+          "values": "0.015150000000000014+0x20"
+        }
+      ],
+      "alert_rule_test": [
+        {
+          "eval_time": "20m",
+          "alertname": "GoldenPathAvailabilitySlowBurn",
+          "exp_alerts": []
+        }
+      ]
+    },
+    {
+      "name": "prod availability 2h/1d both",
+      "interval": "1m",
+      "input_series": [
+        {
+          "series": "gp:slo_error_ratio:rate2h{tenant=\"website\",env=\"prod\",slo=\"availability\"}",
+          "values": "0.015150000000000014+0x20"
+        },
+        {
+          "series": "gp:slo_error_ratio:rate1d{tenant=\"website\",env=\"prod\",slo=\"availability\"}",
+          "values": "0.015150000000000014+0x20"
+        }
+      ],
+      "alert_rule_test": [
+        {
+          "eval_time": "20m",
+          "alertname": "GoldenPathAvailabilitySlowBurn",
+          "exp_alerts": [
+            {
+              "exp_labels": {
+                "tenant": "website",
+                "env": "prod",
+                "namespace": "website-prod",
+                "slo": "availability",
+                "severity": "warning"
+              },
+              "exp_annotations": {
+                "summary": "website-prod availability error budget slow burn",
+                "description": "Measured ingress 5xx fraction exceeds paired 3x (2h AND 1d) OR 1x (6h AND 3d) burn thresholds against the nominal 30-day objective 0.995. Warning appears on the hourly status board. Low volume is a prior, not a fitted target; absent or zero traffic is not success. Check telemetry diagnostics.",
+                "runbook_url": "https://github.com/leemarkus/k8s-golden-path/blob/main/docs/runbooks/slo-burn.md",
+                "activation": "ENABLED: repository runbook body published by the runbook stage; live activation verifies live discovery/routing and runbooks use the golden-path repository main-branch URL."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "prod availability 6h/3d below",
+      "interval": "1m",
+      "input_series": [
+        {
+          "series": "gp:slo_error_ratio:rate6h{tenant=\"website\",env=\"prod\",slo=\"availability\"}",
+          "values": "0.004950000000000005+0x20"
+        },
+        {
+          "series": "gp:slo_error_ratio:rate3d{tenant=\"website\",env=\"prod\",slo=\"availability\"}",
+          "values": "0.004950000000000005+0x20"
+        }
+      ],
+      "alert_rule_test": [
+        {
+          "eval_time": "20m",
+          "alertname": "GoldenPathAvailabilitySlowBurn",
+          "exp_alerts": []
+        }
+      ]
+    },
+    {
+      "name": "prod availability 6h/3d short-only",
+      "interval": "1m",
+      "input_series": [
+        {
+          "series": "gp:slo_error_ratio:rate6h{tenant=\"website\",env=\"prod\",slo=\"availability\"}",
+          "values": "0.005050000000000004+0x20"
+        },
+        {
+          "series": "gp:slo_error_ratio:rate3d{tenant=\"website\",env=\"prod\",slo=\"availability\"}",
+          "values": "0.004950000000000005+0x20"
+        }
+      ],
+      "alert_rule_test": [
+        {
+          "eval_time": "20m",
+          "alertname": "GoldenPathAvailabilitySlowBurn",
+          "exp_alerts": []
+        }
+      ]
+    },
+    {
+      "name": "prod availability 6h/3d long-only",
+      "interval": "1m",
+      "input_series": [
+        {
+          "series": "gp:slo_error_ratio:rate6h{tenant=\"website\",env=\"prod\",slo=\"availability\"}",
+          "values": "0.004950000000000005+0x20"
+        },
+        {
+          "series": "gp:slo_error_ratio:rate3d{tenant=\"website\",env=\"prod\",slo=\"availability\"}",
+          "values": "0.005050000000000004+0x20"
+        }
+      ],
+      "alert_rule_test": [
+        {
+          "eval_time": "20m",
+          "alertname": "GoldenPathAvailabilitySlowBurn",
+          "exp_alerts": []
+        }
+      ]
+    },
+    {
+      "name": "prod availability 6h/3d both",
+      "interval": "1m",
+      "input_series": [
+        {
+          "series": "gp:slo_error_ratio:rate6h{tenant=\"website\",env=\"prod\",slo=\"availability\"}",
+          "values": "0.005050000000000004+0x20"
+        },
+        {
+          "series": "gp:slo_error_ratio:rate3d{tenant=\"website\",env=\"prod\",slo=\"availability\"}",
+          "values": "0.005050000000000004+0x20"
+        }
+      ],
+      "alert_rule_test": [
+        {
+          "eval_time": "20m",
+          "alertname": "GoldenPathAvailabilitySlowBurn",
+          "exp_alerts": [
+            {
+              "exp_labels": {
+                "tenant": "website",
+                "env": "prod",
+                "namespace": "website-prod",
+                "slo": "availability",
+                "severity": "warning"
+              },
+              "exp_annotations": {
+                "summary": "website-prod availability error budget slow burn",
+                "description": "Measured ingress 5xx fraction exceeds paired 3x (2h AND 1d) OR 1x (6h AND 3d) burn thresholds against the nominal 30-day objective 0.995. Warning appears on the hourly status board. Low volume is a prior, not a fitted target; absent or zero traffic is not success. Check telemetry diagnostics.",
+                "runbook_url": "https://github.com/leemarkus/k8s-golden-path/blob/main/docs/runbooks/slo-burn.md",
+                "activation": "ENABLED: repository runbook body published by the runbook stage; live activation verifies live discovery/routing and runbooks use the golden-path repository main-branch URL."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "prod latency 5m/1h below",
+      "interval": "1m",
+      "input_series": [
+        {
+          "series": "gp:slo_error_ratio:rate5m{tenant=\"website\",env=\"prod\",slo=\"latency\"}",
+          "values": "0.14256000000000013+0x20"
+        },
+        {
+          "series": "gp:slo_error_ratio:rate1h{tenant=\"website\",env=\"prod\",slo=\"latency\"}",
+          "values": "0.14256000000000013+0x20"
+        }
+      ],
+      "alert_rule_test": [
+        {
+          "eval_time": "20m",
+          "alertname": "GoldenPathLatencyFastBurn",
+          "exp_alerts": []
+        }
+      ]
+    },
+    {
+      "name": "prod latency 5m/1h short-only",
+      "interval": "1m",
+      "input_series": [
+        {
+          "series": "gp:slo_error_ratio:rate5m{tenant=\"website\",env=\"prod\",slo=\"latency\"}",
+          "values": "0.14544000000000012+0x20"
+        },
+        {
+          "series": "gp:slo_error_ratio:rate1h{tenant=\"website\",env=\"prod\",slo=\"latency\"}",
+          "values": "0.14256000000000013+0x20"
+        }
+      ],
+      "alert_rule_test": [
+        {
+          "eval_time": "20m",
+          "alertname": "GoldenPathLatencyFastBurn",
+          "exp_alerts": []
+        }
+      ]
+    },
+    {
+      "name": "prod latency 5m/1h long-only",
+      "interval": "1m",
+      "input_series": [
+        {
+          "series": "gp:slo_error_ratio:rate5m{tenant=\"website\",env=\"prod\",slo=\"latency\"}",
+          "values": "0.14256000000000013+0x20"
+        },
+        {
+          "series": "gp:slo_error_ratio:rate1h{tenant=\"website\",env=\"prod\",slo=\"latency\"}",
+          "values": "0.14544000000000012+0x20"
+        }
+      ],
+      "alert_rule_test": [
+        {
+          "eval_time": "20m",
+          "alertname": "GoldenPathLatencyFastBurn",
+          "exp_alerts": []
+        }
+      ]
+    },
+    {
+      "name": "prod latency 5m/1h both",
+      "interval": "1m",
+      "input_series": [
+        {
+          "series": "gp:slo_error_ratio:rate5m{tenant=\"website\",env=\"prod\",slo=\"latency\"}",
+          "values": "0.14544000000000012+0x20"
+        },
+        {
+          "series": "gp:slo_error_ratio:rate1h{tenant=\"website\",env=\"prod\",slo=\"latency\"}",
+          "values": "0.14544000000000012+0x20"
+        }
+      ],
+      "alert_rule_test": [
+        {
+          "eval_time": "20m",
+          "alertname": "GoldenPathLatencyFastBurn",
+          "exp_alerts": [
+            {
+              "exp_labels": {
+                "tenant": "website",
+                "env": "prod",
+                "namespace": "website-prod",
+                "slo": "latency",
+                "severity": "critical"
+              },
+              "exp_annotations": {
+                "summary": "website-prod latency error budget fast burn",
+                "description": "Measured fraction slower than 0.5s exceeds paired 14.4x (5m AND 1h) OR 6x (30m AND 6h) burn thresholds against the nominal 30-day objective 0.99. Critical routes to page. Low volume is a prior, not a fitted target; absent or zero traffic is not success. Check telemetry diagnostics.",
+                "runbook_url": "https://github.com/leemarkus/k8s-golden-path/blob/main/docs/runbooks/slo-burn.md",
+                "activation": "DISABLED AND EXCLUDED: Before activation, require real user traffic, measured latency distribution, verified histogram bucket and reviewed objective (ADR-0011)."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "prod latency 30m/6h below",
+      "interval": "1m",
+      "input_series": [
+        {
+          "series": "gp:slo_error_ratio:rate30m{tenant=\"website\",env=\"prod\",slo=\"latency\"}",
+          "values": "0.05940000000000005+0x20"
+        },
+        {
+          "series": "gp:slo_error_ratio:rate6h{tenant=\"website\",env=\"prod\",slo=\"latency\"}",
+          "values": "0.05940000000000005+0x20"
+        }
+      ],
+      "alert_rule_test": [
+        {
+          "eval_time": "20m",
+          "alertname": "GoldenPathLatencyFastBurn",
+          "exp_alerts": []
+        }
+      ]
+    },
+    {
+      "name": "prod latency 30m/6h short-only",
+      "interval": "1m",
+      "input_series": [
+        {
+          "series": "gp:slo_error_ratio:rate30m{tenant=\"website\",env=\"prod\",slo=\"latency\"}",
+          "values": "0.06060000000000006+0x20"
+        },
+        {
+          "series": "gp:slo_error_ratio:rate6h{tenant=\"website\",env=\"prod\",slo=\"latency\"}",
+          "values": "0.05940000000000005+0x20"
+        }
+      ],
+      "alert_rule_test": [
+        {
+          "eval_time": "20m",
+          "alertname": "GoldenPathLatencyFastBurn",
+          "exp_alerts": []
+        }
+      ]
+    },
+    {
+      "name": "prod latency 30m/6h long-only",
+      "interval": "1m",
+      "input_series": [
+        {
+          "series": "gp:slo_error_ratio:rate30m{tenant=\"website\",env=\"prod\",slo=\"latency\"}",
+          "values": "0.05940000000000005+0x20"
+        },
+        {
+          "series": "gp:slo_error_ratio:rate6h{tenant=\"website\",env=\"prod\",slo=\"latency\"}",
+          "values": "0.06060000000000006+0x20"
+        }
+      ],
+      "alert_rule_test": [
+        {
+          "eval_time": "20m",
+          "alertname": "GoldenPathLatencyFastBurn",
+          "exp_alerts": []
+        }
+      ]
+    },
+    {
+      "name": "prod latency 30m/6h both",
+      "interval": "1m",
+      "input_series": [
+        {
+          "series": "gp:slo_error_ratio:rate30m{tenant=\"website\",env=\"prod\",slo=\"latency\"}",
+          "values": "0.06060000000000006+0x20"
+        },
+        {
+          "series": "gp:slo_error_ratio:rate6h{tenant=\"website\",env=\"prod\",slo=\"latency\"}",
+          "values": "0.06060000000000006+0x20"
+        }
+      ],
+      "alert_rule_test": [
+        {
+          "eval_time": "20m",
+          "alertname": "GoldenPathLatencyFastBurn",
+          "exp_alerts": [
+            {
+              "exp_labels": {
+                "tenant": "website",
+                "env": "prod",
+                "namespace": "website-prod",
+                "slo": "latency",
+                "severity": "critical"
+              },
+              "exp_annotations": {
+                "summary": "website-prod latency error budget fast burn",
+                "description": "Measured fraction slower than 0.5s exceeds paired 14.4x (5m AND 1h) OR 6x (30m AND 6h) burn thresholds against the nominal 30-day objective 0.99. Critical routes to page. Low volume is a prior, not a fitted target; absent or zero traffic is not success. Check telemetry diagnostics.",
+                "runbook_url": "https://github.com/leemarkus/k8s-golden-path/blob/main/docs/runbooks/slo-burn.md",
+                "activation": "DISABLED AND EXCLUDED: Before activation, require real user traffic, measured latency distribution, verified histogram bucket and reviewed objective (ADR-0011)."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "prod latency 2h/1d below",
+      "interval": "1m",
+      "input_series": [
+        {
+          "series": "gp:slo_error_ratio:rate2h{tenant=\"website\",env=\"prod\",slo=\"latency\"}",
+          "values": "0.029700000000000025+0x20"
+        },
+        {
+          "series": "gp:slo_error_ratio:rate1d{tenant=\"website\",env=\"prod\",slo=\"latency\"}",
+          "values": "0.029700000000000025+0x20"
+        }
+      ],
+      "alert_rule_test": [
+        {
+          "eval_time": "20m",
+          "alertname": "GoldenPathLatencySlowBurn",
+          "exp_alerts": []
+        }
+      ]
+    },
+    {
+      "name": "prod latency 2h/1d short-only",
+      "interval": "1m",
+      "input_series": [
+        {
+          "series": "gp:slo_error_ratio:rate2h{tenant=\"website\",env=\"prod\",slo=\"latency\"}",
+          "values": "0.03030000000000003+0x20"
+        },
+        {
+          "series": "gp:slo_error_ratio:rate1d{tenant=\"website\",env=\"prod\",slo=\"latency\"}",
+          "values": "0.029700000000000025+0x20"
+        }
+      ],
+      "alert_rule_test": [
+        {
+          "eval_time": "20m",
+          "alertname": "GoldenPathLatencySlowBurn",
+          "exp_alerts": []
+        }
+      ]
+    },
+    {
+      "name": "prod latency 2h/1d long-only",
+      "interval": "1m",
+      "input_series": [
+        {
+          "series": "gp:slo_error_ratio:rate2h{tenant=\"website\",env=\"prod\",slo=\"latency\"}",
+          "values": "0.029700000000000025+0x20"
+        },
+        {
+          "series": "gp:slo_error_ratio:rate1d{tenant=\"website\",env=\"prod\",slo=\"latency\"}",
+          "values": "0.03030000000000003+0x20"
+        }
+      ],
+      "alert_rule_test": [
+        {
+          "eval_time": "20m",
+          "alertname": "GoldenPathLatencySlowBurn",
+          "exp_alerts": []
+        }
+      ]
+    },
+    {
+      "name": "prod latency 2h/1d both",
+      "interval": "1m",
+      "input_series": [
+        {
+          "series": "gp:slo_error_ratio:rate2h{tenant=\"website\",env=\"prod\",slo=\"latency\"}",
+          "values": "0.03030000000000003+0x20"
+        },
+        {
+          "series": "gp:slo_error_ratio:rate1d{tenant=\"website\",env=\"prod\",slo=\"latency\"}",
+          "values": "0.03030000000000003+0x20"
+        }
+      ],
+      "alert_rule_test": [
+        {
+          "eval_time": "20m",
+          "alertname": "GoldenPathLatencySlowBurn",
+          "exp_alerts": [
+            {
+              "exp_labels": {
+                "tenant": "website",
+                "env": "prod",
+                "namespace": "website-prod",
+                "slo": "latency",
+                "severity": "warning"
+              },
+              "exp_annotations": {
+                "summary": "website-prod latency error budget slow burn",
+                "description": "Measured fraction slower than 0.5s exceeds paired 3x (2h AND 1d) OR 1x (6h AND 3d) burn thresholds against the nominal 30-day objective 0.99. Warning appears on the hourly status board. Low volume is a prior, not a fitted target; absent or zero traffic is not success. Check telemetry diagnostics.",
+                "runbook_url": "https://github.com/leemarkus/k8s-golden-path/blob/main/docs/runbooks/slo-burn.md",
+                "activation": "DISABLED AND EXCLUDED: Before activation, require real user traffic, measured latency distribution, verified histogram bucket and reviewed objective (ADR-0011)."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "prod latency 6h/3d below",
+      "interval": "1m",
+      "input_series": [
+        {
+          "series": "gp:slo_error_ratio:rate6h{tenant=\"website\",env=\"prod\",slo=\"latency\"}",
+          "values": "0.00990000000000001+0x20"
+        },
+        {
+          "series": "gp:slo_error_ratio:rate3d{tenant=\"website\",env=\"prod\",slo=\"latency\"}",
+          "values": "0.00990000000000001+0x20"
+        }
+      ],
+      "alert_rule_test": [
+        {
+          "eval_time": "20m",
+          "alertname": "GoldenPathLatencySlowBurn",
+          "exp_alerts": []
+        }
+      ]
+    },
+    {
+      "name": "prod latency 6h/3d short-only",
+      "interval": "1m",
+      "input_series": [
+        {
+          "series": "gp:slo_error_ratio:rate6h{tenant=\"website\",env=\"prod\",slo=\"latency\"}",
+          "values": "0.010100000000000008+0x20"
+        },
+        {
+          "series": "gp:slo_error_ratio:rate3d{tenant=\"website\",env=\"prod\",slo=\"latency\"}",
+          "values": "0.00990000000000001+0x20"
+        }
+      ],
+      "alert_rule_test": [
+        {
+          "eval_time": "20m",
+          "alertname": "GoldenPathLatencySlowBurn",
+          "exp_alerts": []
+        }
+      ]
+    },
+    {
+      "name": "prod latency 6h/3d long-only",
+      "interval": "1m",
+      "input_series": [
+        {
+          "series": "gp:slo_error_ratio:rate6h{tenant=\"website\",env=\"prod\",slo=\"latency\"}",
+          "values": "0.00990000000000001+0x20"
+        },
+        {
+          "series": "gp:slo_error_ratio:rate3d{tenant=\"website\",env=\"prod\",slo=\"latency\"}",
+          "values": "0.010100000000000008+0x20"
+        }
+      ],
+      "alert_rule_test": [
+        {
+          "eval_time": "20m",
+          "alertname": "GoldenPathLatencySlowBurn",
+          "exp_alerts": []
+        }
+      ]
+    },
+    {
+      "name": "prod latency 6h/3d both",
+      "interval": "1m",
+      "input_series": [
+        {
+          "series": "gp:slo_error_ratio:rate6h{tenant=\"website\",env=\"prod\",slo=\"latency\"}",
+          "values": "0.010100000000000008+0x20"
+        },
+        {
+          "series": "gp:slo_error_ratio:rate3d{tenant=\"website\",env=\"prod\",slo=\"latency\"}",
+          "values": "0.010100000000000008+0x20"
+        }
+      ],
+      "alert_rule_test": [
+        {
+          "eval_time": "20m",
+          "alertname": "GoldenPathLatencySlowBurn",
+          "exp_alerts": [
+            {
+              "exp_labels": {
+                "tenant": "website",
+                "env": "prod",
+                "namespace": "website-prod",
+                "slo": "latency",
+                "severity": "warning"
+              },
+              "exp_annotations": {
+                "summary": "website-prod latency error budget slow burn",
+                "description": "Measured fraction slower than 0.5s exceeds paired 3x (2h AND 1d) OR 1x (6h AND 3d) burn thresholds against the nominal 30-day objective 0.99. Warning appears on the hourly status board. Low volume is a prior, not a fitted target; absent or zero traffic is not success. Check telemetry diagnostics.",
+                "runbook_url": "https://github.com/leemarkus/k8s-golden-path/blob/main/docs/runbooks/slo-burn.md",
+                "activation": "DISABLED AND EXCLUDED: Before activation, require real user traffic, measured latency distribution, verified histogram bucket and reviewed objective (ADR-0011)."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "GoldenPathAvailabilityTelemetryMissing: startup grace and absent telemetry",
+      "interval": "1m",
+      "input_series": [],
+      "alert_rule_test": [
+        {
+          "eval_time": "14m",
+          "alertname": "GoldenPathAvailabilityTelemetryMissing",
+          "exp_alerts": []
+        },
+        {
+          "eval_time": "16m",
+          "alertname": "GoldenPathAvailabilityTelemetryMissing",
+          "exp_alerts": [
+            {
+              "exp_labels": {
+                "tenant": "website",
+                "env": "dev",
+                "namespace": "website-dev",
+                "slo": "availability",
+                "severity": "warning"
+              },
+              "exp_annotations": {
+                "summary": "website-dev: AvailabilityTelemetryMissing",
+                "description": "Ingress request counters are missing or stale; availability is unobserved, not healthy. Check ingress existence, scrape discovery, release labels and exported_namespace/namespace selectors.",
+                "runbook_url": "https://github.com/leemarkus/k8s-golden-path/blob/main/docs/runbooks/telemetry-missing.md",
+                "activation": "ENABLED: repository runbook body published by the runbook stage; 15m startup grace. Live activation verifies live discovery/routing."
+              }
+            },
+            {
+              "exp_labels": {
+                "tenant": "website",
+                "env": "prod",
+                "namespace": "website-prod",
+                "slo": "availability",
+                "severity": "warning"
+              },
+              "exp_annotations": {
+                "summary": "website-prod: AvailabilityTelemetryMissing",
+                "description": "Ingress request counters are missing or stale; availability is unobserved, not healthy. Check ingress existence, scrape discovery, release labels and exported_namespace/namespace selectors.",
+                "runbook_url": "https://github.com/leemarkus/k8s-golden-path/blob/main/docs/runbooks/telemetry-missing.md",
+                "activation": "ENABLED: repository runbook body published by the runbook stage; 15m startup grace. Live activation verifies live discovery/routing."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "GoldenPathLatencyTelemetryMissing: startup grace and absent telemetry",
+      "interval": "1m",
+      "input_series": [],
+      "alert_rule_test": [
+        {
+          "eval_time": "14m",
+          "alertname": "GoldenPathLatencyTelemetryMissing",
+          "exp_alerts": []
+        },
+        {
+          "eval_time": "16m",
+          "alertname": "GoldenPathLatencyTelemetryMissing",
+          "exp_alerts": [
+            {
+              "exp_labels": {
+                "tenant": "website",
+                "env": "dev",
+                "namespace": "website-dev",
+                "slo": "latency",
+                "severity": "warning"
+              },
+              "exp_annotations": {
+                "summary": "website-dev: LatencyTelemetryMissing",
+                "description": "The latency count or required 0.5s bucket is missing or stale. Latency is unobserved; verify histogram configuration and scraping before activation.",
+                "runbook_url": "https://github.com/leemarkus/k8s-golden-path/blob/main/docs/runbooks/telemetry-missing.md",
+                "activation": "ENABLED: repository runbook body published by the runbook stage; 15m startup grace. Live activation verifies live discovery/routing."
+              }
+            },
+            {
+              "exp_labels": {
+                "tenant": "website",
+                "env": "prod",
+                "namespace": "website-prod",
+                "slo": "latency",
+                "severity": "warning"
+              },
+              "exp_annotations": {
+                "summary": "website-prod: LatencyTelemetryMissing",
+                "description": "The latency count or required 0.5s bucket is missing or stale. Latency is unobserved; verify histogram configuration and scraping before activation.",
+                "runbook_url": "https://github.com/leemarkus/k8s-golden-path/blob/main/docs/runbooks/telemetry-missing.md",
+                "activation": "ENABLED: repository runbook body published by the runbook stage; 15m startup grace. Live activation verifies live discovery/routing."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Idle counters report no observation after grace",
+      "interval": "1m",
+      "input_series": [
+        {
+          "series": "nginx_ingress_controller_requests{namespace=\"ingress-nginx\",exported_namespace=\"website-dev\",ingress=\"website\"}",
+          "values": "0+0x20"
+        },
+        {
+          "series": "nginx_ingress_controller_requests{namespace=\"ingress-nginx\",exported_namespace=\"website-prod\",ingress=\"website\"}",
+          "values": "0+0x20"
+        }
+      ],
+      "alert_rule_test": [
+        {
+          "eval_time": "20m",
+          "alertname": "GoldenPathNoTraffic",
+          "exp_alerts": [
+            {
+              "exp_labels": {
+                "tenant": "website",
+                "env": "dev",
+                "namespace": "website-dev",
+                "slo": "availability",
+                "severity": "warning"
+              },
+              "exp_annotations": {
+                "summary": "website-dev: NoTraffic",
+                "description": "Counters exist but no requests were observed in the trailing 5m for at least 15m. This is no observation, not perfect availability or a measured outage. Check expected traffic and ingress routing.",
+                "runbook_url": "https://github.com/leemarkus/k8s-golden-path/blob/main/docs/runbooks/telemetry-missing.md",
+                "activation": "ENABLED: repository runbook body published by the runbook stage; 15m startup grace. Live activation verifies live discovery/routing."
+              }
+            },
+            {
+              "exp_labels": {
+                "tenant": "website",
+                "env": "prod",
+                "namespace": "website-prod",
+                "slo": "availability",
+                "severity": "warning"
+              },
+              "exp_annotations": {
+                "summary": "website-prod: NoTraffic",
+                "description": "Counters exist but no requests were observed in the trailing 5m for at least 15m. This is no observation, not perfect availability or a measured outage. Check expected traffic and ingress routing.",
+                "runbook_url": "https://github.com/leemarkus/k8s-golden-path/blob/main/docs/runbooks/telemetry-missing.md",
+                "activation": "ENABLED: repository runbook body published by the runbook stage; 15m startup grace. Live activation verifies live discovery/routing."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Missing dev latency bucket cannot be hidden by prod histogram",
+      "interval": "1m",
+      "input_series": [
+        {
+          "series": "nginx_ingress_controller_request_duration_seconds_count{namespace=\"ingress-nginx\",exported_namespace=\"website-dev\",ingress=\"website\"}",
+          "values": "0+100x20"
+        },
+        {
+          "series": "nginx_ingress_controller_request_duration_seconds_count{namespace=\"ingress-nginx\",exported_namespace=\"website-prod\",ingress=\"website\"}",
+          "values": "0+100x20"
+        },
+        {
+          "series": "nginx_ingress_controller_request_duration_seconds_bucket{namespace=\"ingress-nginx\",exported_namespace=\"website-prod\",ingress=\"website\",le=\"0.5\"}",
+          "values": "0+100x20"
+        }
+      ],
+      "alert_rule_test": [
+        {
+          "eval_time": "16m",
+          "alertname": "GoldenPathLatencyTelemetryMissing",
+          "exp_alerts": [
+            {
+              "exp_labels": {
+                "tenant": "website",
+                "env": "dev",
+                "namespace": "website-dev",
+                "slo": "latency",
+                "severity": "warning"
+              },
+              "exp_annotations": {
+                "summary": "website-dev: LatencyTelemetryMissing",
+                "description": "The latency count or required 0.5s bucket is missing or stale. Latency is unobserved; verify histogram configuration and scraping before activation.",
+                "runbook_url": "https://github.com/leemarkus/k8s-golden-path/blob/main/docs/runbooks/telemetry-missing.md",
+                "activation": "ENABLED: repository runbook body published by the runbook stage; 15m startup grace. Live activation verifies live discovery/routing."
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

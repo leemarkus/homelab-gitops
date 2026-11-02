@@ -1,0 +1,216 @@
+# CI runner (host executor). No cluster credentials: no Role, and
+# automountServiceAccountToken is false. Tool binaries are fetched once by an
+# init container into the runner's persistent volume.
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: forgejo-runner
+  namespace: forgejo-runner
+  labels:
+    app.kubernetes.io/name: forgejo-runner
+spec:
+  serviceName: forgejo-runner
+  replicas: 1
+  selector:
+    matchLabels:
+      app: forgejo-runner
+  volumeClaimTemplates:
+    - metadata:
+        name: data
+      spec:
+        accessModes: ["ReadWriteOnce"]
+        storageClassName: longhorn
+        resources:
+          requests:
+            storage: 10Gi
+  template:
+    metadata:
+      labels:
+        app: forgejo-runner
+        app.kubernetes.io/name: forgejo-runner
+    spec:
+      serviceAccountName: forgejo-runner
+      automountServiceAccountToken: false
+      securityContext:
+        fsGroup: 0
+        runAsNonRoot: false
+      initContainers:
+        - name: provision-tools
+          image: debian:bookworm-slim@sha256:3783cc01769c7b2b1b83a5c5ad96c815348e28ed7da68e2e3687004faa906251
+          imagePullPolicy: IfNotPresent
+          command: ["/bin/bash", "-c"]
+          args:
+            - |
+              set -eu
+              BUILDKIT_VER=v0.34.0
+              buildctl_at() {
+                local out
+                out=$("$1" --version 2>/dev/null) || return 1
+                [ "$(printf '%s\n' "$out" | awk 'NR==1{print $3}')" = "$BUILDKIT_VER" ]
+              }
+              if [ -x /data/bin/forgejo-runner ] && [ -x /data/bin/kubeconform ] \
+                 && [ -x /data/bin/helm ] && [ -x /data/bin/kustomize ] \
+                 && [ -x /data/bin/node ] && [ -x /data/bin/buildctl ] \
+                 && [ -x /data/bin/trivy ] && [ -x /data/bin/npm ] \
+                 && [ -x /data/bin/kyverno ] \
+                 && buildctl_at /data/bin/buildctl; then
+                echo "[+] tools already provisioned"
+                exit 0
+              fi
+              echo "[+] installing tools into /data/bin"
+              mkdir -p /data/bin
+              apt-get update
+              apt-get install -y --no-install-recommends curl ca-certificates tar gzip
+              rm -rf /var/lib/apt/lists/*
+
+              curl -fsSL -o /data/bin/forgejo-runner \
+                "https://code.forgejo.org/forgejo/runner/releases/download/v12.13.1/forgejo-runner-12.13.1-linux-amd64"
+              chmod +x /data/bin/forgejo-runner
+
+              curl -fsSL "https://github.com/yannh/kubeconform/releases/download/v0.7.0/kubeconform-linux-amd64.tar.gz" \
+                | tar xz -C /data/bin kubeconform
+              chmod +x /data/bin/kubeconform
+
+              curl -fsSL -o /tmp/helm.tgz \
+                "https://get.helm.sh/helm-v3.19.0-linux-amd64.tar.gz"
+              tar -xzf /tmp/helm.tgz -C /tmp
+              mv /tmp/linux-amd64/helm /data/bin/helm
+              chmod +x /data/bin/helm
+
+              curl -fsSL -o /tmp/kustomize.tgz \
+                "https://github.com/kubernetes-sigs/kustomize/releases/download/kustomize%2Fv5.7.1/kustomize_v5.7.1_linux_amd64.tar.gz"
+              tar -xzf /tmp/kustomize.tgz -C /data/bin kustomize
+              chmod +x /data/bin/kustomize
+
+              NODE_VER=24.18.0
+              curl -fsSL -o /tmp/node.tgz \
+                "https://nodejs.org/dist/v${NODE_VER}/node-v${NODE_VER}-linux-x64.tar.gz"
+              tar -xzf /tmp/node.tgz -C /tmp
+              rm -rf /data/node
+              mv "/tmp/node-v${NODE_VER}-linux-x64" /data/node
+              ln -sf /data/node/bin/node /data/bin/node
+              ln -sf /data/node/bin/npm  /data/bin/npm
+              ln -sf /data/node/bin/npx  /data/bin/npx
+              rm -f /tmp/node.tgz
+
+              curl -fsSL -o /tmp/buildkit.tgz \
+                "https://github.com/moby/buildkit/releases/download/${BUILDKIT_VER}/buildkit-${BUILDKIT_VER}.linux-amd64.tar.gz"
+              echo "14813b1fb2a40082114e6d386c6fc5e7dd5298176ce7ee1a18bc33e73e109ac3  /tmp/buildkit.tgz" | sha256sum -c -
+              tar -xzf /tmp/buildkit.tgz -C /tmp bin/buildctl
+              install -m 0755 /tmp/bin/buildctl /data/bin/.buildctl.new
+              buildctl_at /data/bin/.buildctl.new
+              mv -f /data/bin/.buildctl.new /data/bin/buildctl
+              rm -rf /tmp/buildkit.tgz /tmp/bin
+
+              curl -fsSL -o /tmp/kyverno.tgz \
+                "https://github.com/kyverno/kyverno/releases/download/v1.18.2/kyverno-cli_v1.18.2_linux_x86_64.tar.gz"
+              tar -xzf /tmp/kyverno.tgz -C /data/bin kyverno
+              chmod +x /data/bin/kyverno
+              rm -f /tmp/kyverno.tgz
+
+              curl -fsSL -o /tmp/trivy.tgz \
+                "https://github.com/aquasecurity/trivy/releases/download/v0.72.0/trivy_0.72.0_Linux-64bit.tar.gz"
+              tar -xzf /tmp/trivy.tgz -C /data/bin trivy
+              chmod +x /data/bin/trivy
+              rm -f /tmp/trivy.tgz
+
+              echo "[+] all tools provisioned"
+              ls -la /data/bin
+          resources:
+            requests: {cpu: 100m, memory: 128Mi}
+            limits: {memory: 512Mi}
+          volumeMounts:
+            - name: data
+              mountPath: /data
+        - name: register
+          image: debian:bookworm-slim@sha256:3783cc01769c7b2b1b83a5c5ad96c815348e28ed7da68e2e3687004faa906251
+          imagePullPolicy: IfNotPresent
+          command: ["/bin/bash", "-c"]
+          args:
+            - |
+              set -eu
+              cd /data
+              if [ -f .runner ]; then
+                echo "[+] runner already registered"
+                exit 0
+              fi
+              echo "[+] registering runner with $FORGEJO_INSTANCE_URL"
+              /data/bin/forgejo-runner register --no-interactive \
+                --instance "$FORGEJO_INSTANCE_URL" \
+                --token "$FORGEJO_TOKEN" \
+                --name "k3s-v2-runner-$(hostname)" \
+                --labels "docker:host,ubuntu-latest:host,ubuntu-22.04:host"
+          env:
+            - name: FORGEJO_INSTANCE_URL
+              value: "https://git.example.com"
+            - name: FORGEJO_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: forgejo-runner-token
+                  key: token
+          resources:
+            requests: {cpu: 50m, memory: 64Mi}
+            limits: {memory: 256Mi}
+          volumeMounts:
+            - name: data
+              mountPath: /data
+      containers:
+        - name: runner
+          image: debian:bookworm-slim@sha256:3783cc01769c7b2b1b83a5c5ad96c815348e28ed7da68e2e3687004faa906251
+          imagePullPolicy: IfNotPresent
+          command: ["/bin/bash", "-c"]
+          args:
+            - |
+              set -eu
+              APT_OPTS="-o APT::Sandbox::User=root"
+              apt-get $APT_OPTS update >/dev/null
+              apt-get $APT_OPTS install -y --no-install-recommends \
+                ca-certificates curl git bash jq python3 python3-pip yamllint procps >/dev/null
+              rm -rf /var/lib/apt/lists/*
+              export PATH="/data/bin:$PATH"
+              cd /data
+              exec /data/bin/forgejo-runner daemon --config /etc/runner/config.yaml
+          env:
+            - name: HOME
+              value: /data
+            - name: PATH
+              value: /data/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+          resources:
+            requests: {cpu: 200m, memory: 512Mi}
+            limits: {cpu: 2000m, memory: 4Gi}
+          readinessProbe:
+            exec:
+              command:
+                - /bin/bash
+                - -c
+                - "test -f /data/.runner && pgrep -f 'forgejo-runner daemon' >/dev/null"
+            initialDelaySeconds: 30
+            periodSeconds: 20
+            timeoutSeconds: 5
+            failureThreshold: 3
+          volumeMounts:
+            - name: data
+              mountPath: /data
+            - name: config
+              mountPath: /etc/runner
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop: ["ALL"]
+      volumes:
+        - name: config
+          configMap:
+            name: forgejo-runner-config
+---
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: forgejo-runner
+  namespace: forgejo-runner
+  labels:
+    app.kubernetes.io/name: forgejo-runner
+spec:
+  minAvailable: 0
+  selector:
+    matchLabels:
+      app: forgejo-runner

@@ -1,0 +1,584 @@
+{
+  "groups": [
+    {
+      "name": "website-dev-availability",
+      "interval": "30s",
+      "rules": [
+        {
+          "record": "gp:slo_error_ratio:rate5m",
+          "expr": "((sum(rate(nginx_ingress_controller_requests{exported_namespace=\"website-dev\",ingress=\"website\",status=~\"5..\"}[5m]) or rate(nginx_ingress_controller_requests{namespace=\"website-dev\",exported_namespace=\"\",ingress=\"website\",status=~\"5..\"}[5m])) or (0 * sum(rate(nginx_ingress_controller_requests{exported_namespace=\"website-dev\",ingress=\"website\"}[5m]) or rate(nginx_ingress_controller_requests{namespace=\"website-dev\",exported_namespace=\"\",ingress=\"website\"}[5m])))) / sum(rate(nginx_ingress_controller_requests{exported_namespace=\"website-dev\",ingress=\"website\"}[5m]) or rate(nginx_ingress_controller_requests{namespace=\"website-dev\",exported_namespace=\"\",ingress=\"website\"}[5m]))) and (sum(rate(nginx_ingress_controller_requests{exported_namespace=\"website-dev\",ingress=\"website\"}[5m]) or rate(nginx_ingress_controller_requests{namespace=\"website-dev\",exported_namespace=\"\",ingress=\"website\"}[5m])) > 0)",
+          "labels": {
+            "tenant": "website",
+            "env": "dev",
+            "namespace": "website-dev",
+            "slo": "availability"
+          }
+        },
+        {
+          "record": "gp:slo_error_ratio:rate30m",
+          "expr": "((sum(rate(nginx_ingress_controller_requests{exported_namespace=\"website-dev\",ingress=\"website\",status=~\"5..\"}[30m]) or rate(nginx_ingress_controller_requests{namespace=\"website-dev\",exported_namespace=\"\",ingress=\"website\",status=~\"5..\"}[30m])) or (0 * sum(rate(nginx_ingress_controller_requests{exported_namespace=\"website-dev\",ingress=\"website\"}[30m]) or rate(nginx_ingress_controller_requests{namespace=\"website-dev\",exported_namespace=\"\",ingress=\"website\"}[30m])))) / sum(rate(nginx_ingress_controller_requests{exported_namespace=\"website-dev\",ingress=\"website\"}[30m]) or rate(nginx_ingress_controller_requests{namespace=\"website-dev\",exported_namespace=\"\",ingress=\"website\"}[30m]))) and (sum(rate(nginx_ingress_controller_requests{exported_namespace=\"website-dev\",ingress=\"website\"}[30m]) or rate(nginx_ingress_controller_requests{namespace=\"website-dev\",exported_namespace=\"\",ingress=\"website\"}[30m])) > 0)",
+          "labels": {
+            "tenant": "website",
+            "env": "dev",
+            "namespace": "website-dev",
+            "slo": "availability"
+          }
+        },
+        {
+          "record": "gp:slo_error_ratio:rate1h",
+          "expr": "((sum(rate(nginx_ingress_controller_requests{exported_namespace=\"website-dev\",ingress=\"website\",status=~\"5..\"}[1h]) or rate(nginx_ingress_controller_requests{namespace=\"website-dev\",exported_namespace=\"\",ingress=\"website\",status=~\"5..\"}[1h])) or (0 * sum(rate(nginx_ingress_controller_requests{exported_namespace=\"website-dev\",ingress=\"website\"}[1h]) or rate(nginx_ingress_controller_requests{namespace=\"website-dev\",exported_namespace=\"\",ingress=\"website\"}[1h])))) / sum(rate(nginx_ingress_controller_requests{exported_namespace=\"website-dev\",ingress=\"website\"}[1h]) or rate(nginx_ingress_controller_requests{namespace=\"website-dev\",exported_namespace=\"\",ingress=\"website\"}[1h]))) and (sum(rate(nginx_ingress_controller_requests{exported_namespace=\"website-dev\",ingress=\"website\"}[1h]) or rate(nginx_ingress_controller_requests{namespace=\"website-dev\",exported_namespace=\"\",ingress=\"website\"}[1h])) > 0)",
+          "labels": {
+            "tenant": "website",
+            "env": "dev",
+            "namespace": "website-dev",
+            "slo": "availability"
+          }
+        },
+        {
+          "record": "gp:slo_error_ratio:rate2h",
+          "expr": "((sum(rate(nginx_ingress_controller_requests{exported_namespace=\"website-dev\",ingress=\"website\",status=~\"5..\"}[2h]) or rate(nginx_ingress_controller_requests{namespace=\"website-dev\",exported_namespace=\"\",ingress=\"website\",status=~\"5..\"}[2h])) or (0 * sum(rate(nginx_ingress_controller_requests{exported_namespace=\"website-dev\",ingress=\"website\"}[2h]) or rate(nginx_ingress_controller_requests{namespace=\"website-dev\",exported_namespace=\"\",ingress=\"website\"}[2h])))) / sum(rate(nginx_ingress_controller_requests{exported_namespace=\"website-dev\",ingress=\"website\"}[2h]) or rate(nginx_ingress_controller_requests{namespace=\"website-dev\",exported_namespace=\"\",ingress=\"website\"}[2h]))) and (sum(rate(nginx_ingress_controller_requests{exported_namespace=\"website-dev\",ingress=\"website\"}[2h]) or rate(nginx_ingress_controller_requests{namespace=\"website-dev\",exported_namespace=\"\",ingress=\"website\"}[2h])) > 0)",
+          "labels": {
+            "tenant": "website",
+            "env": "dev",
+            "namespace": "website-dev",
+            "slo": "availability"
+          }
+        },
+        {
+          "record": "gp:slo_error_ratio:rate6h",
+          "expr": "((sum(rate(nginx_ingress_controller_requests{exported_namespace=\"website-dev\",ingress=\"website\",status=~\"5..\"}[6h]) or rate(nginx_ingress_controller_requests{namespace=\"website-dev\",exported_namespace=\"\",ingress=\"website\",status=~\"5..\"}[6h])) or (0 * sum(rate(nginx_ingress_controller_requests{exported_namespace=\"website-dev\",ingress=\"website\"}[6h]) or rate(nginx_ingress_controller_requests{namespace=\"website-dev\",exported_namespace=\"\",ingress=\"website\"}[6h])))) / sum(rate(nginx_ingress_controller_requests{exported_namespace=\"website-dev\",ingress=\"website\"}[6h]) or rate(nginx_ingress_controller_requests{namespace=\"website-dev\",exported_namespace=\"\",ingress=\"website\"}[6h]))) and (sum(rate(nginx_ingress_controller_requests{exported_namespace=\"website-dev\",ingress=\"website\"}[6h]) or rate(nginx_ingress_controller_requests{namespace=\"website-dev\",exported_namespace=\"\",ingress=\"website\"}[6h])) > 0)",
+          "labels": {
+            "tenant": "website",
+            "env": "dev",
+            "namespace": "website-dev",
+            "slo": "availability"
+          }
+        },
+        {
+          "record": "gp:slo_error_ratio:rate1d",
+          "expr": "((sum(rate(nginx_ingress_controller_requests{exported_namespace=\"website-dev\",ingress=\"website\",status=~\"5..\"}[1d]) or rate(nginx_ingress_controller_requests{namespace=\"website-dev\",exported_namespace=\"\",ingress=\"website\",status=~\"5..\"}[1d])) or (0 * sum(rate(nginx_ingress_controller_requests{exported_namespace=\"website-dev\",ingress=\"website\"}[1d]) or rate(nginx_ingress_controller_requests{namespace=\"website-dev\",exported_namespace=\"\",ingress=\"website\"}[1d])))) / sum(rate(nginx_ingress_controller_requests{exported_namespace=\"website-dev\",ingress=\"website\"}[1d]) or rate(nginx_ingress_controller_requests{namespace=\"website-dev\",exported_namespace=\"\",ingress=\"website\"}[1d]))) and (sum(rate(nginx_ingress_controller_requests{exported_namespace=\"website-dev\",ingress=\"website\"}[1d]) or rate(nginx_ingress_controller_requests{namespace=\"website-dev\",exported_namespace=\"\",ingress=\"website\"}[1d])) > 0)",
+          "labels": {
+            "tenant": "website",
+            "env": "dev",
+            "namespace": "website-dev",
+            "slo": "availability"
+          }
+        },
+        {
+          "record": "gp:slo_error_ratio:rate3d",
+          "expr": "((sum(rate(nginx_ingress_controller_requests{exported_namespace=\"website-dev\",ingress=\"website\",status=~\"5..\"}[3d]) or rate(nginx_ingress_controller_requests{namespace=\"website-dev\",exported_namespace=\"\",ingress=\"website\",status=~\"5..\"}[3d])) or (0 * sum(rate(nginx_ingress_controller_requests{exported_namespace=\"website-dev\",ingress=\"website\"}[3d]) or rate(nginx_ingress_controller_requests{namespace=\"website-dev\",exported_namespace=\"\",ingress=\"website\"}[3d])))) / sum(rate(nginx_ingress_controller_requests{exported_namespace=\"website-dev\",ingress=\"website\"}[3d]) or rate(nginx_ingress_controller_requests{namespace=\"website-dev\",exported_namespace=\"\",ingress=\"website\"}[3d]))) and (sum(rate(nginx_ingress_controller_requests{exported_namespace=\"website-dev\",ingress=\"website\"}[3d]) or rate(nginx_ingress_controller_requests{namespace=\"website-dev\",exported_namespace=\"\",ingress=\"website\"}[3d])) > 0)",
+          "labels": {
+            "tenant": "website",
+            "env": "dev",
+            "namespace": "website-dev",
+            "slo": "availability"
+          }
+        }
+      ]
+    },
+    {
+      "name": "website-dev-latency",
+      "interval": "30s",
+      "rules": [
+        {
+          "record": "gp:slo_error_ratio:rate5m",
+          "expr": "(1 - sum(rate(nginx_ingress_controller_request_duration_seconds_bucket{exported_namespace=\"website-dev\",ingress=\"website\",le=\"0.5\"}[5m]) or rate(nginx_ingress_controller_request_duration_seconds_bucket{namespace=\"website-dev\",exported_namespace=\"\",ingress=\"website\",le=\"0.5\"}[5m])) / sum(rate(nginx_ingress_controller_request_duration_seconds_count{exported_namespace=\"website-dev\",ingress=\"website\"}[5m]) or rate(nginx_ingress_controller_request_duration_seconds_count{namespace=\"website-dev\",exported_namespace=\"\",ingress=\"website\"}[5m]))) and (sum(rate(nginx_ingress_controller_request_duration_seconds_count{exported_namespace=\"website-dev\",ingress=\"website\"}[5m]) or rate(nginx_ingress_controller_request_duration_seconds_count{namespace=\"website-dev\",exported_namespace=\"\",ingress=\"website\"}[5m])) > 0)",
+          "labels": {
+            "tenant": "website",
+            "env": "dev",
+            "namespace": "website-dev",
+            "slo": "latency"
+          }
+        },
+        {
+          "record": "gp:slo_error_ratio:rate30m",
+          "expr": "(1 - sum(rate(nginx_ingress_controller_request_duration_seconds_bucket{exported_namespace=\"website-dev\",ingress=\"website\",le=\"0.5\"}[30m]) or rate(nginx_ingress_controller_request_duration_seconds_bucket{namespace=\"website-dev\",exported_namespace=\"\",ingress=\"website\",le=\"0.5\"}[30m])) / sum(rate(nginx_ingress_controller_request_duration_seconds_count{exported_namespace=\"website-dev\",ingress=\"website\"}[30m]) or rate(nginx_ingress_controller_request_duration_seconds_count{namespace=\"website-dev\",exported_namespace=\"\",ingress=\"website\"}[30m]))) and (sum(rate(nginx_ingress_controller_request_duration_seconds_count{exported_namespace=\"website-dev\",ingress=\"website\"}[30m]) or rate(nginx_ingress_controller_request_duration_seconds_count{namespace=\"website-dev\",exported_namespace=\"\",ingress=\"website\"}[30m])) > 0)",
+          "labels": {
+            "tenant": "website",
+            "env": "dev",
+            "namespace": "website-dev",
+            "slo": "latency"
+          }
+        },
+        {
+          "record": "gp:slo_error_ratio:rate1h",
+          "expr": "(1 - sum(rate(nginx_ingress_controller_request_duration_seconds_bucket{exported_namespace=\"website-dev\",ingress=\"website\",le=\"0.5\"}[1h]) or rate(nginx_ingress_controller_request_duration_seconds_bucket{namespace=\"website-dev\",exported_namespace=\"\",ingress=\"website\",le=\"0.5\"}[1h])) / sum(rate(nginx_ingress_controller_request_duration_seconds_count{exported_namespace=\"website-dev\",ingress=\"website\"}[1h]) or rate(nginx_ingress_controller_request_duration_seconds_count{namespace=\"website-dev\",exported_namespace=\"\",ingress=\"website\"}[1h]))) and (sum(rate(nginx_ingress_controller_request_duration_seconds_count{exported_namespace=\"website-dev\",ingress=\"website\"}[1h]) or rate(nginx_ingress_controller_request_duration_seconds_count{namespace=\"website-dev\",exported_namespace=\"\",ingress=\"website\"}[1h])) > 0)",
+          "labels": {
+            "tenant": "website",
+            "env": "dev",
+            "namespace": "website-dev",
+            "slo": "latency"
+          }
+        },
+        {
+          "record": "gp:slo_error_ratio:rate2h",
+          "expr": "(1 - sum(rate(nginx_ingress_controller_request_duration_seconds_bucket{exported_namespace=\"website-dev\",ingress=\"website\",le=\"0.5\"}[2h]) or rate(nginx_ingress_controller_request_duration_seconds_bucket{namespace=\"website-dev\",exported_namespace=\"\",ingress=\"website\",le=\"0.5\"}[2h])) / sum(rate(nginx_ingress_controller_request_duration_seconds_count{exported_namespace=\"website-dev\",ingress=\"website\"}[2h]) or rate(nginx_ingress_controller_request_duration_seconds_count{namespace=\"website-dev\",exported_namespace=\"\",ingress=\"website\"}[2h]))) and (sum(rate(nginx_ingress_controller_request_duration_seconds_count{exported_namespace=\"website-dev\",ingress=\"website\"}[2h]) or rate(nginx_ingress_controller_request_duration_seconds_count{namespace=\"website-dev\",exported_namespace=\"\",ingress=\"website\"}[2h])) > 0)",
+          "labels": {
+            "tenant": "website",
+            "env": "dev",
+            "namespace": "website-dev",
+            "slo": "latency"
+          }
+        },
+        {
+          "record": "gp:slo_error_ratio:rate6h",
+          "expr": "(1 - sum(rate(nginx_ingress_controller_request_duration_seconds_bucket{exported_namespace=\"website-dev\",ingress=\"website\",le=\"0.5\"}[6h]) or rate(nginx_ingress_controller_request_duration_seconds_bucket{namespace=\"website-dev\",exported_namespace=\"\",ingress=\"website\",le=\"0.5\"}[6h])) / sum(rate(nginx_ingress_controller_request_duration_seconds_count{exported_namespace=\"website-dev\",ingress=\"website\"}[6h]) or rate(nginx_ingress_controller_request_duration_seconds_count{namespace=\"website-dev\",exported_namespace=\"\",ingress=\"website\"}[6h]))) and (sum(rate(nginx_ingress_controller_request_duration_seconds_count{exported_namespace=\"website-dev\",ingress=\"website\"}[6h]) or rate(nginx_ingress_controller_request_duration_seconds_count{namespace=\"website-dev\",exported_namespace=\"\",ingress=\"website\"}[6h])) > 0)",
+          "labels": {
+            "tenant": "website",
+            "env": "dev",
+            "namespace": "website-dev",
+            "slo": "latency"
+          }
+        },
+        {
+          "record": "gp:slo_error_ratio:rate1d",
+          "expr": "(1 - sum(rate(nginx_ingress_controller_request_duration_seconds_bucket{exported_namespace=\"website-dev\",ingress=\"website\",le=\"0.5\"}[1d]) or rate(nginx_ingress_controller_request_duration_seconds_bucket{namespace=\"website-dev\",exported_namespace=\"\",ingress=\"website\",le=\"0.5\"}[1d])) / sum(rate(nginx_ingress_controller_request_duration_seconds_count{exported_namespace=\"website-dev\",ingress=\"website\"}[1d]) or rate(nginx_ingress_controller_request_duration_seconds_count{namespace=\"website-dev\",exported_namespace=\"\",ingress=\"website\"}[1d]))) and (sum(rate(nginx_ingress_controller_request_duration_seconds_count{exported_namespace=\"website-dev\",ingress=\"website\"}[1d]) or rate(nginx_ingress_controller_request_duration_seconds_count{namespace=\"website-dev\",exported_namespace=\"\",ingress=\"website\"}[1d])) > 0)",
+          "labels": {
+            "tenant": "website",
+            "env": "dev",
+            "namespace": "website-dev",
+            "slo": "latency"
+          }
+        },
+        {
+          "record": "gp:slo_error_ratio:rate3d",
+          "expr": "(1 - sum(rate(nginx_ingress_controller_request_duration_seconds_bucket{exported_namespace=\"website-dev\",ingress=\"website\",le=\"0.5\"}[3d]) or rate(nginx_ingress_controller_request_duration_seconds_bucket{namespace=\"website-dev\",exported_namespace=\"\",ingress=\"website\",le=\"0.5\"}[3d])) / sum(rate(nginx_ingress_controller_request_duration_seconds_count{exported_namespace=\"website-dev\",ingress=\"website\"}[3d]) or rate(nginx_ingress_controller_request_duration_seconds_count{namespace=\"website-dev\",exported_namespace=\"\",ingress=\"website\"}[3d]))) and (sum(rate(nginx_ingress_controller_request_duration_seconds_count{exported_namespace=\"website-dev\",ingress=\"website\"}[3d]) or rate(nginx_ingress_controller_request_duration_seconds_count{namespace=\"website-dev\",exported_namespace=\"\",ingress=\"website\"}[3d])) > 0)",
+          "labels": {
+            "tenant": "website",
+            "env": "dev",
+            "namespace": "website-dev",
+            "slo": "latency"
+          }
+        }
+      ]
+    },
+    {
+      "name": "website-dev-availability-alerts",
+      "interval": "30s",
+      "rules": [
+        {
+          "alert": "GoldenPathAvailabilityFastBurn",
+          "expr": "(((gp:slo_error_ratio:rate5m{tenant=\"website\",env=\"dev\",slo=\"availability\"} / (1 - 0.995) > 14.4) and (gp:slo_error_ratio:rate1h{tenant=\"website\",env=\"dev\",slo=\"availability\"} / (1 - 0.995) > 14.4)) or ((gp:slo_error_ratio:rate30m{tenant=\"website\",env=\"dev\",slo=\"availability\"} / (1 - 0.995) > 6) and (gp:slo_error_ratio:rate6h{tenant=\"website\",env=\"dev\",slo=\"availability\"} / (1 - 0.995) > 6)))",
+          "for": "2m",
+          "labels": {
+            "tenant": "website",
+            "env": "dev",
+            "namespace": "website-dev",
+            "slo": "availability",
+            "severity": "critical"
+          },
+          "annotations": {
+            "summary": "website-dev availability error budget fast burn",
+            "description": "Measured ingress 5xx fraction exceeds paired 14.4x (5m AND 1h) OR 6x (30m AND 6h) burn thresholds against the nominal 30-day objective 0.995. Critical routes to page. Low volume is a prior, not a fitted target; absent or zero traffic is not success. Check telemetry diagnostics.",
+            "runbook_url": "https://github.com/leemarkus/k8s-golden-path/blob/main/docs/runbooks/slo-burn.md",
+            "activation": "ENABLED: repository runbook body published by the runbook stage; live activation verifies live discovery/routing and runbooks use the golden-path repository main-branch URL."
+          }
+        },
+        {
+          "alert": "GoldenPathAvailabilitySlowBurn",
+          "expr": "(((gp:slo_error_ratio:rate2h{tenant=\"website\",env=\"dev\",slo=\"availability\"} / (1 - 0.995) > 3) and (gp:slo_error_ratio:rate1d{tenant=\"website\",env=\"dev\",slo=\"availability\"} / (1 - 0.995) > 3)) or ((gp:slo_error_ratio:rate6h{tenant=\"website\",env=\"dev\",slo=\"availability\"} / (1 - 0.995) > 1) and (gp:slo_error_ratio:rate3d{tenant=\"website\",env=\"dev\",slo=\"availability\"} / (1 - 0.995) > 1)))",
+          "for": "15m",
+          "labels": {
+            "tenant": "website",
+            "env": "dev",
+            "namespace": "website-dev",
+            "slo": "availability",
+            "severity": "warning"
+          },
+          "annotations": {
+            "summary": "website-dev availability error budget slow burn",
+            "description": "Measured ingress 5xx fraction exceeds paired 3x (2h AND 1d) OR 1x (6h AND 3d) burn thresholds against the nominal 30-day objective 0.995. Warning appears on the hourly status board. Low volume is a prior, not a fitted target; absent or zero traffic is not success. Check telemetry diagnostics.",
+            "runbook_url": "https://github.com/leemarkus/k8s-golden-path/blob/main/docs/runbooks/slo-burn.md",
+            "activation": "ENABLED: repository runbook body published by the runbook stage; live activation verifies live discovery/routing and runbooks use the golden-path repository main-branch URL."
+          }
+        },
+        {
+          "alert": "GoldenPathAvailabilityTelemetryMissing",
+          "expr": "(sum(absent(nginx_ingress_controller_requests{exported_namespace=\"website-dev\",ingress=\"website\"}) and on() absent(nginx_ingress_controller_requests{namespace=\"website-dev\",exported_namespace=\"\",ingress=\"website\"})))",
+          "for": "15m",
+          "labels": {
+            "tenant": "website",
+            "env": "dev",
+            "namespace": "website-dev",
+            "slo": "availability",
+            "severity": "warning"
+          },
+          "annotations": {
+            "summary": "website-dev: AvailabilityTelemetryMissing",
+            "description": "Ingress request counters are missing or stale; availability is unobserved, not healthy. Check ingress existence, scrape discovery, release labels and exported_namespace/namespace selectors.",
+            "runbook_url": "https://github.com/leemarkus/k8s-golden-path/blob/main/docs/runbooks/telemetry-missing.md",
+            "activation": "ENABLED: repository runbook body published by the runbook stage; 15m startup grace. Live activation verifies live discovery/routing."
+          }
+        },
+        {
+          "alert": "GoldenPathLatencyTelemetryMissing",
+          "expr": "(sum(absent(nginx_ingress_controller_request_duration_seconds_count{exported_namespace=\"website-dev\",ingress=\"website\"}) and on() absent(nginx_ingress_controller_request_duration_seconds_count{namespace=\"website-dev\",exported_namespace=\"\",ingress=\"website\"})) or sum(absent(nginx_ingress_controller_request_duration_seconds_bucket{exported_namespace=\"website-dev\",ingress=\"website\",le=\"0.5\"}) and on() absent(nginx_ingress_controller_request_duration_seconds_bucket{namespace=\"website-dev\",exported_namespace=\"\",ingress=\"website\",le=\"0.5\"})))",
+          "for": "15m",
+          "labels": {
+            "tenant": "website",
+            "env": "dev",
+            "namespace": "website-dev",
+            "slo": "latency",
+            "severity": "warning"
+          },
+          "annotations": {
+            "summary": "website-dev: LatencyTelemetryMissing",
+            "description": "The latency count or required 0.5s bucket is missing or stale. Latency is unobserved; verify histogram configuration and scraping before activation.",
+            "runbook_url": "https://github.com/leemarkus/k8s-golden-path/blob/main/docs/runbooks/telemetry-missing.md",
+            "activation": "ENABLED: repository runbook body published by the runbook stage; 15m startup grace. Live activation verifies live discovery/routing."
+          }
+        },
+        {
+          "alert": "GoldenPathNoTraffic",
+          "expr": "(sum(rate(nginx_ingress_controller_requests{exported_namespace=\"website-dev\",ingress=\"website\"}[5m]) or rate(nginx_ingress_controller_requests{namespace=\"website-dev\",exported_namespace=\"\",ingress=\"website\"}[5m])) == 0)",
+          "for": "15m",
+          "labels": {
+            "tenant": "website",
+            "env": "dev",
+            "namespace": "website-dev",
+            "slo": "availability",
+            "severity": "warning"
+          },
+          "annotations": {
+            "summary": "website-dev: NoTraffic",
+            "description": "Counters exist but no requests were observed in the trailing 5m for at least 15m. This is no observation, not perfect availability or a measured outage. Check expected traffic and ingress routing.",
+            "runbook_url": "https://github.com/leemarkus/k8s-golden-path/blob/main/docs/runbooks/telemetry-missing.md",
+            "activation": "ENABLED: repository runbook body published by the runbook stage; 15m startup grace. Live activation verifies live discovery/routing."
+          }
+        }
+      ]
+    },
+    {
+      "name": "website-dev-latency-staged",
+      "interval": "30s",
+      "rules": [
+        {
+          "alert": "GoldenPathLatencyFastBurn",
+          "expr": "(((gp:slo_error_ratio:rate5m{tenant=\"website\",env=\"dev\",slo=\"latency\"} / (1 - 0.99) > 14.4) and (gp:slo_error_ratio:rate1h{tenant=\"website\",env=\"dev\",slo=\"latency\"} / (1 - 0.99) > 14.4)) or ((gp:slo_error_ratio:rate30m{tenant=\"website\",env=\"dev\",slo=\"latency\"} / (1 - 0.99) > 6) and (gp:slo_error_ratio:rate6h{tenant=\"website\",env=\"dev\",slo=\"latency\"} / (1 - 0.99) > 6))) and on() (vector(0) == 1)",
+          "for": "2m",
+          "labels": {
+            "tenant": "website",
+            "env": "dev",
+            "namespace": "website-dev",
+            "slo": "latency",
+            "severity": "critical"
+          },
+          "annotations": {
+            "summary": "website-dev latency error budget fast burn",
+            "description": "Measured fraction slower than 0.5s exceeds paired 14.4x (5m AND 1h) OR 6x (30m AND 6h) burn thresholds against the nominal 30-day objective 0.99. Critical routes to page. Low volume is a prior, not a fitted target; absent or zero traffic is not success. Check telemetry diagnostics.",
+            "runbook_url": "https://github.com/leemarkus/k8s-golden-path/blob/main/docs/runbooks/slo-burn.md",
+            "activation": "DISABLED AND EXCLUDED: Before activation, require real user traffic, measured latency distribution, verified histogram bucket and reviewed objective (ADR-0011)."
+          }
+        },
+        {
+          "alert": "GoldenPathLatencySlowBurn",
+          "expr": "(((gp:slo_error_ratio:rate2h{tenant=\"website\",env=\"dev\",slo=\"latency\"} / (1 - 0.99) > 3) and (gp:slo_error_ratio:rate1d{tenant=\"website\",env=\"dev\",slo=\"latency\"} / (1 - 0.99) > 3)) or ((gp:slo_error_ratio:rate6h{tenant=\"website\",env=\"dev\",slo=\"latency\"} / (1 - 0.99) > 1) and (gp:slo_error_ratio:rate3d{tenant=\"website\",env=\"dev\",slo=\"latency\"} / (1 - 0.99) > 1))) and on() (vector(0) == 1)",
+          "for": "15m",
+          "labels": {
+            "tenant": "website",
+            "env": "dev",
+            "namespace": "website-dev",
+            "slo": "latency",
+            "severity": "warning"
+          },
+          "annotations": {
+            "summary": "website-dev latency error budget slow burn",
+            "description": "Measured fraction slower than 0.5s exceeds paired 3x (2h AND 1d) OR 1x (6h AND 3d) burn thresholds against the nominal 30-day objective 0.99. Warning appears on the hourly status board. Low volume is a prior, not a fitted target; absent or zero traffic is not success. Check telemetry diagnostics.",
+            "runbook_url": "https://github.com/leemarkus/k8s-golden-path/blob/main/docs/runbooks/slo-burn.md",
+            "activation": "DISABLED AND EXCLUDED: Before activation, require real user traffic, measured latency distribution, verified histogram bucket and reviewed objective (ADR-0011)."
+          }
+        }
+      ]
+    },
+    {
+      "name": "website-prod-availability",
+      "interval": "30s",
+      "rules": [
+        {
+          "record": "gp:slo_error_ratio:rate5m",
+          "expr": "((sum(rate(nginx_ingress_controller_requests{exported_namespace=\"website-prod\",ingress=\"website\",status=~\"5..\"}[5m]) or rate(nginx_ingress_controller_requests{namespace=\"website-prod\",exported_namespace=\"\",ingress=\"website\",status=~\"5..\"}[5m])) or (0 * sum(rate(nginx_ingress_controller_requests{exported_namespace=\"website-prod\",ingress=\"website\"}[5m]) or rate(nginx_ingress_controller_requests{namespace=\"website-prod\",exported_namespace=\"\",ingress=\"website\"}[5m])))) / sum(rate(nginx_ingress_controller_requests{exported_namespace=\"website-prod\",ingress=\"website\"}[5m]) or rate(nginx_ingress_controller_requests{namespace=\"website-prod\",exported_namespace=\"\",ingress=\"website\"}[5m]))) and (sum(rate(nginx_ingress_controller_requests{exported_namespace=\"website-prod\",ingress=\"website\"}[5m]) or rate(nginx_ingress_controller_requests{namespace=\"website-prod\",exported_namespace=\"\",ingress=\"website\"}[5m])) > 0)",
+          "labels": {
+            "tenant": "website",
+            "env": "prod",
+            "namespace": "website-prod",
+            "slo": "availability"
+          }
+        },
+        {
+          "record": "gp:slo_error_ratio:rate30m",
+          "expr": "((sum(rate(nginx_ingress_controller_requests{exported_namespace=\"website-prod\",ingress=\"website\",status=~\"5..\"}[30m]) or rate(nginx_ingress_controller_requests{namespace=\"website-prod\",exported_namespace=\"\",ingress=\"website\",status=~\"5..\"}[30m])) or (0 * sum(rate(nginx_ingress_controller_requests{exported_namespace=\"website-prod\",ingress=\"website\"}[30m]) or rate(nginx_ingress_controller_requests{namespace=\"website-prod\",exported_namespace=\"\",ingress=\"website\"}[30m])))) / sum(rate(nginx_ingress_controller_requests{exported_namespace=\"website-prod\",ingress=\"website\"}[30m]) or rate(nginx_ingress_controller_requests{namespace=\"website-prod\",exported_namespace=\"\",ingress=\"website\"}[30m]))) and (sum(rate(nginx_ingress_controller_requests{exported_namespace=\"website-prod\",ingress=\"website\"}[30m]) or rate(nginx_ingress_controller_requests{namespace=\"website-prod\",exported_namespace=\"\",ingress=\"website\"}[30m])) > 0)",
+          "labels": {
+            "tenant": "website",
+            "env": "prod",
+            "namespace": "website-prod",
+            "slo": "availability"
+          }
+        },
+        {
+          "record": "gp:slo_error_ratio:rate1h",
+          "expr": "((sum(rate(nginx_ingress_controller_requests{exported_namespace=\"website-prod\",ingress=\"website\",status=~\"5..\"}[1h]) or rate(nginx_ingress_controller_requests{namespace=\"website-prod\",exported_namespace=\"\",ingress=\"website\",status=~\"5..\"}[1h])) or (0 * sum(rate(nginx_ingress_controller_requests{exported_namespace=\"website-prod\",ingress=\"website\"}[1h]) or rate(nginx_ingress_controller_requests{namespace=\"website-prod\",exported_namespace=\"\",ingress=\"website\"}[1h])))) / sum(rate(nginx_ingress_controller_requests{exported_namespace=\"website-prod\",ingress=\"website\"}[1h]) or rate(nginx_ingress_controller_requests{namespace=\"website-prod\",exported_namespace=\"\",ingress=\"website\"}[1h]))) and (sum(rate(nginx_ingress_controller_requests{exported_namespace=\"website-prod\",ingress=\"website\"}[1h]) or rate(nginx_ingress_controller_requests{namespace=\"website-prod\",exported_namespace=\"\",ingress=\"website\"}[1h])) > 0)",
+          "labels": {
+            "tenant": "website",
+            "env": "prod",
+            "namespace": "website-prod",
+            "slo": "availability"
+          }
+        },
+        {
+          "record": "gp:slo_error_ratio:rate2h",
+          "expr": "((sum(rate(nginx_ingress_controller_requests{exported_namespace=\"website-prod\",ingress=\"website\",status=~\"5..\"}[2h]) or rate(nginx_ingress_controller_requests{namespace=\"website-prod\",exported_namespace=\"\",ingress=\"website\",status=~\"5..\"}[2h])) or (0 * sum(rate(nginx_ingress_controller_requests{exported_namespace=\"website-prod\",ingress=\"website\"}[2h]) or rate(nginx_ingress_controller_requests{namespace=\"website-prod\",exported_namespace=\"\",ingress=\"website\"}[2h])))) / sum(rate(nginx_ingress_controller_requests{exported_namespace=\"website-prod\",ingress=\"website\"}[2h]) or rate(nginx_ingress_controller_requests{namespace=\"website-prod\",exported_namespace=\"\",ingress=\"website\"}[2h]))) and (sum(rate(nginx_ingress_controller_requests{exported_namespace=\"website-prod\",ingress=\"website\"}[2h]) or rate(nginx_ingress_controller_requests{namespace=\"website-prod\",exported_namespace=\"\",ingress=\"website\"}[2h])) > 0)",
+          "labels": {
+            "tenant": "website",
+            "env": "prod",
+            "namespace": "website-prod",
+            "slo": "availability"
+          }
+        },
+        {
+          "record": "gp:slo_error_ratio:rate6h",
+          "expr": "((sum(rate(nginx_ingress_controller_requests{exported_namespace=\"website-prod\",ingress=\"website\",status=~\"5..\"}[6h]) or rate(nginx_ingress_controller_requests{namespace=\"website-prod\",exported_namespace=\"\",ingress=\"website\",status=~\"5..\"}[6h])) or (0 * sum(rate(nginx_ingress_controller_requests{exported_namespace=\"website-prod\",ingress=\"website\"}[6h]) or rate(nginx_ingress_controller_requests{namespace=\"website-prod\",exported_namespace=\"\",ingress=\"website\"}[6h])))) / sum(rate(nginx_ingress_controller_requests{exported_namespace=\"website-prod\",ingress=\"website\"}[6h]) or rate(nginx_ingress_controller_requests{namespace=\"website-prod\",exported_namespace=\"\",ingress=\"website\"}[6h]))) and (sum(rate(nginx_ingress_controller_requests{exported_namespace=\"website-prod\",ingress=\"website\"}[6h]) or rate(nginx_ingress_controller_requests{namespace=\"website-prod\",exported_namespace=\"\",ingress=\"website\"}[6h])) > 0)",
+          "labels": {
+            "tenant": "website",
+            "env": "prod",
+            "namespace": "website-prod",
+            "slo": "availability"
+          }
+        },
+        {
+          "record": "gp:slo_error_ratio:rate1d",
+          "expr": "((sum(rate(nginx_ingress_controller_requests{exported_namespace=\"website-prod\",ingress=\"website\",status=~\"5..\"}[1d]) or rate(nginx_ingress_controller_requests{namespace=\"website-prod\",exported_namespace=\"\",ingress=\"website\",status=~\"5..\"}[1d])) or (0 * sum(rate(nginx_ingress_controller_requests{exported_namespace=\"website-prod\",ingress=\"website\"}[1d]) or rate(nginx_ingress_controller_requests{namespace=\"website-prod\",exported_namespace=\"\",ingress=\"website\"}[1d])))) / sum(rate(nginx_ingress_controller_requests{exported_namespace=\"website-prod\",ingress=\"website\"}[1d]) or rate(nginx_ingress_controller_requests{namespace=\"website-prod\",exported_namespace=\"\",ingress=\"website\"}[1d]))) and (sum(rate(nginx_ingress_controller_requests{exported_namespace=\"website-prod\",ingress=\"website\"}[1d]) or rate(nginx_ingress_controller_requests{namespace=\"website-prod\",exported_namespace=\"\",ingress=\"website\"}[1d])) > 0)",
+          "labels": {
+            "tenant": "website",
+            "env": "prod",
+            "namespace": "website-prod",
+            "slo": "availability"
+          }
+        },
+        {
+          "record": "gp:slo_error_ratio:rate3d",
+          "expr": "((sum(rate(nginx_ingress_controller_requests{exported_namespace=\"website-prod\",ingress=\"website\",status=~\"5..\"}[3d]) or rate(nginx_ingress_controller_requests{namespace=\"website-prod\",exported_namespace=\"\",ingress=\"website\",status=~\"5..\"}[3d])) or (0 * sum(rate(nginx_ingress_controller_requests{exported_namespace=\"website-prod\",ingress=\"website\"}[3d]) or rate(nginx_ingress_controller_requests{namespace=\"website-prod\",exported_namespace=\"\",ingress=\"website\"}[3d])))) / sum(rate(nginx_ingress_controller_requests{exported_namespace=\"website-prod\",ingress=\"website\"}[3d]) or rate(nginx_ingress_controller_requests{namespace=\"website-prod\",exported_namespace=\"\",ingress=\"website\"}[3d]))) and (sum(rate(nginx_ingress_controller_requests{exported_namespace=\"website-prod\",ingress=\"website\"}[3d]) or rate(nginx_ingress_controller_requests{namespace=\"website-prod\",exported_namespace=\"\",ingress=\"website\"}[3d])) > 0)",
+          "labels": {
+            "tenant": "website",
+            "env": "prod",
+            "namespace": "website-prod",
+            "slo": "availability"
+          }
+        }
+      ]
+    },
+    {
+      "name": "website-prod-latency",
+      "interval": "30s",
+      "rules": [
+        {
+          "record": "gp:slo_error_ratio:rate5m",
+          "expr": "(1 - sum(rate(nginx_ingress_controller_request_duration_seconds_bucket{exported_namespace=\"website-prod\",ingress=\"website\",le=\"0.5\"}[5m]) or rate(nginx_ingress_controller_request_duration_seconds_bucket{namespace=\"website-prod\",exported_namespace=\"\",ingress=\"website\",le=\"0.5\"}[5m])) / sum(rate(nginx_ingress_controller_request_duration_seconds_count{exported_namespace=\"website-prod\",ingress=\"website\"}[5m]) or rate(nginx_ingress_controller_request_duration_seconds_count{namespace=\"website-prod\",exported_namespace=\"\",ingress=\"website\"}[5m]))) and (sum(rate(nginx_ingress_controller_request_duration_seconds_count{exported_namespace=\"website-prod\",ingress=\"website\"}[5m]) or rate(nginx_ingress_controller_request_duration_seconds_count{namespace=\"website-prod\",exported_namespace=\"\",ingress=\"website\"}[5m])) > 0)",
+          "labels": {
+            "tenant": "website",
+            "env": "prod",
+            "namespace": "website-prod",
+            "slo": "latency"
+          }
+        },
+        {
+          "record": "gp:slo_error_ratio:rate30m",
+          "expr": "(1 - sum(rate(nginx_ingress_controller_request_duration_seconds_bucket{exported_namespace=\"website-prod\",ingress=\"website\",le=\"0.5\"}[30m]) or rate(nginx_ingress_controller_request_duration_seconds_bucket{namespace=\"website-prod\",exported_namespace=\"\",ingress=\"website\",le=\"0.5\"}[30m])) / sum(rate(nginx_ingress_controller_request_duration_seconds_count{exported_namespace=\"website-prod\",ingress=\"website\"}[30m]) or rate(nginx_ingress_controller_request_duration_seconds_count{namespace=\"website-prod\",exported_namespace=\"\",ingress=\"website\"}[30m]))) and (sum(rate(nginx_ingress_controller_request_duration_seconds_count{exported_namespace=\"website-prod\",ingress=\"website\"}[30m]) or rate(nginx_ingress_controller_request_duration_seconds_count{namespace=\"website-prod\",exported_namespace=\"\",ingress=\"website\"}[30m])) > 0)",
+          "labels": {
+            "tenant": "website",
+            "env": "prod",
+            "namespace": "website-prod",
+            "slo": "latency"
+          }
+        },
+        {
+          "record": "gp:slo_error_ratio:rate1h",
+          "expr": "(1 - sum(rate(nginx_ingress_controller_request_duration_seconds_bucket{exported_namespace=\"website-prod\",ingress=\"website\",le=\"0.5\"}[1h]) or rate(nginx_ingress_controller_request_duration_seconds_bucket{namespace=\"website-prod\",exported_namespace=\"\",ingress=\"website\",le=\"0.5\"}[1h])) / sum(rate(nginx_ingress_controller_request_duration_seconds_count{exported_namespace=\"website-prod\",ingress=\"website\"}[1h]) or rate(nginx_ingress_controller_request_duration_seconds_count{namespace=\"website-prod\",exported_namespace=\"\",ingress=\"website\"}[1h]))) and (sum(rate(nginx_ingress_controller_request_duration_seconds_count{exported_namespace=\"website-prod\",ingress=\"website\"}[1h]) or rate(nginx_ingress_controller_request_duration_seconds_count{namespace=\"website-prod\",exported_namespace=\"\",ingress=\"website\"}[1h])) > 0)",
+          "labels": {
+            "tenant": "website",
+            "env": "prod",
+            "namespace": "website-prod",
+            "slo": "latency"
+          }
+        },
+        {
+          "record": "gp:slo_error_ratio:rate2h",
+          "expr": "(1 - sum(rate(nginx_ingress_controller_request_duration_seconds_bucket{exported_namespace=\"website-prod\",ingress=\"website\",le=\"0.5\"}[2h]) or rate(nginx_ingress_controller_request_duration_seconds_bucket{namespace=\"website-prod\",exported_namespace=\"\",ingress=\"website\",le=\"0.5\"}[2h])) / sum(rate(nginx_ingress_controller_request_duration_seconds_count{exported_namespace=\"website-prod\",ingress=\"website\"}[2h]) or rate(nginx_ingress_controller_request_duration_seconds_count{namespace=\"website-prod\",exported_namespace=\"\",ingress=\"website\"}[2h]))) and (sum(rate(nginx_ingress_controller_request_duration_seconds_count{exported_namespace=\"website-prod\",ingress=\"website\"}[2h]) or rate(nginx_ingress_controller_request_duration_seconds_count{namespace=\"website-prod\",exported_namespace=\"\",ingress=\"website\"}[2h])) > 0)",
+          "labels": {
+            "tenant": "website",
+            "env": "prod",
+            "namespace": "website-prod",
+            "slo": "latency"
+          }
+        },
+        {
+          "record": "gp:slo_error_ratio:rate6h",
+          "expr": "(1 - sum(rate(nginx_ingress_controller_request_duration_seconds_bucket{exported_namespace=\"website-prod\",ingress=\"website\",le=\"0.5\"}[6h]) or rate(nginx_ingress_controller_request_duration_seconds_bucket{namespace=\"website-prod\",exported_namespace=\"\",ingress=\"website\",le=\"0.5\"}[6h])) / sum(rate(nginx_ingress_controller_request_duration_seconds_count{exported_namespace=\"website-prod\",ingress=\"website\"}[6h]) or rate(nginx_ingress_controller_request_duration_seconds_count{namespace=\"website-prod\",exported_namespace=\"\",ingress=\"website\"}[6h]))) and (sum(rate(nginx_ingress_controller_request_duration_seconds_count{exported_namespace=\"website-prod\",ingress=\"website\"}[6h]) or rate(nginx_ingress_controller_request_duration_seconds_count{namespace=\"website-prod\",exported_namespace=\"\",ingress=\"website\"}[6h])) > 0)",
+          "labels": {
+            "tenant": "website",
+            "env": "prod",
+            "namespace": "website-prod",
+            "slo": "latency"
+          }
+        },
+        {
+          "record": "gp:slo_error_ratio:rate1d",
+          "expr": "(1 - sum(rate(nginx_ingress_controller_request_duration_seconds_bucket{exported_namespace=\"website-prod\",ingress=\"website\",le=\"0.5\"}[1d]) or rate(nginx_ingress_controller_request_duration_seconds_bucket{namespace=\"website-prod\",exported_namespace=\"\",ingress=\"website\",le=\"0.5\"}[1d])) / sum(rate(nginx_ingress_controller_request_duration_seconds_count{exported_namespace=\"website-prod\",ingress=\"website\"}[1d]) or rate(nginx_ingress_controller_request_duration_seconds_count{namespace=\"website-prod\",exported_namespace=\"\",ingress=\"website\"}[1d]))) and (sum(rate(nginx_ingress_controller_request_duration_seconds_count{exported_namespace=\"website-prod\",ingress=\"website\"}[1d]) or rate(nginx_ingress_controller_request_duration_seconds_count{namespace=\"website-prod\",exported_namespace=\"\",ingress=\"website\"}[1d])) > 0)",
+          "labels": {
+            "tenant": "website",
+            "env": "prod",
+            "namespace": "website-prod",
+            "slo": "latency"
+          }
+        },
+        {
+          "record": "gp:slo_error_ratio:rate3d",
+          "expr": "(1 - sum(rate(nginx_ingress_controller_request_duration_seconds_bucket{exported_namespace=\"website-prod\",ingress=\"website\",le=\"0.5\"}[3d]) or rate(nginx_ingress_controller_request_duration_seconds_bucket{namespace=\"website-prod\",exported_namespace=\"\",ingress=\"website\",le=\"0.5\"}[3d])) / sum(rate(nginx_ingress_controller_request_duration_seconds_count{exported_namespace=\"website-prod\",ingress=\"website\"}[3d]) or rate(nginx_ingress_controller_request_duration_seconds_count{namespace=\"website-prod\",exported_namespace=\"\",ingress=\"website\"}[3d]))) and (sum(rate(nginx_ingress_controller_request_duration_seconds_count{exported_namespace=\"website-prod\",ingress=\"website\"}[3d]) or rate(nginx_ingress_controller_request_duration_seconds_count{namespace=\"website-prod\",exported_namespace=\"\",ingress=\"website\"}[3d])) > 0)",
+          "labels": {
+            "tenant": "website",
+            "env": "prod",
+            "namespace": "website-prod",
+            "slo": "latency"
+          }
+        }
+      ]
+    },
+    {
+      "name": "website-prod-availability-alerts",
+      "interval": "30s",
+      "rules": [
+        {
+          "alert": "GoldenPathAvailabilityFastBurn",
+          "expr": "(((gp:slo_error_ratio:rate5m{tenant=\"website\",env=\"prod\",slo=\"availability\"} / (1 - 0.995) > 14.4) and (gp:slo_error_ratio:rate1h{tenant=\"website\",env=\"prod\",slo=\"availability\"} / (1 - 0.995) > 14.4)) or ((gp:slo_error_ratio:rate30m{tenant=\"website\",env=\"prod\",slo=\"availability\"} / (1 - 0.995) > 6) and (gp:slo_error_ratio:rate6h{tenant=\"website\",env=\"prod\",slo=\"availability\"} / (1 - 0.995) > 6)))",
+          "for": "2m",
+          "labels": {
+            "tenant": "website",
+            "env": "prod",
+            "namespace": "website-prod",
+            "slo": "availability",
+            "severity": "critical"
+          },
+          "annotations": {
+            "summary": "website-prod availability error budget fast burn",
+            "description": "Measured ingress 5xx fraction exceeds paired 14.4x (5m AND 1h) OR 6x (30m AND 6h) burn thresholds against the nominal 30-day objective 0.995. Critical routes to page. Low volume is a prior, not a fitted target; absent or zero traffic is not success. Check telemetry diagnostics.",
+            "runbook_url": "https://github.com/leemarkus/k8s-golden-path/blob/main/docs/runbooks/slo-burn.md",
+            "activation": "ENABLED: repository runbook body published by the runbook stage; live activation verifies live discovery/routing and runbooks use the golden-path repository main-branch URL."
+          }
+        },
+        {
+          "alert": "GoldenPathAvailabilitySlowBurn",
+          "expr": "(((gp:slo_error_ratio:rate2h{tenant=\"website\",env=\"prod\",slo=\"availability\"} / (1 - 0.995) > 3) and (gp:slo_error_ratio:rate1d{tenant=\"website\",env=\"prod\",slo=\"availability\"} / (1 - 0.995) > 3)) or ((gp:slo_error_ratio:rate6h{tenant=\"website\",env=\"prod\",slo=\"availability\"} / (1 - 0.995) > 1) and (gp:slo_error_ratio:rate3d{tenant=\"website\",env=\"prod\",slo=\"availability\"} / (1 - 0.995) > 1)))",
+          "for": "15m",
+          "labels": {
+            "tenant": "website",
+            "env": "prod",
+            "namespace": "website-prod",
+            "slo": "availability",
+            "severity": "warning"
+          },
+          "annotations": {
+            "summary": "website-prod availability error budget slow burn",
+            "description": "Measured ingress 5xx fraction exceeds paired 3x (2h AND 1d) OR 1x (6h AND 3d) burn thresholds against the nominal 30-day objective 0.995. Warning appears on the hourly status board. Low volume is a prior, not a fitted target; absent or zero traffic is not success. Check telemetry diagnostics.",
+            "runbook_url": "https://github.com/leemarkus/k8s-golden-path/blob/main/docs/runbooks/slo-burn.md",
+            "activation": "ENABLED: repository runbook body published by the runbook stage; live activation verifies live discovery/routing and runbooks use the golden-path repository main-branch URL."
+          }
+        },
+        {
+          "alert": "GoldenPathAvailabilityTelemetryMissing",
+          "expr": "(sum(absent(nginx_ingress_controller_requests{exported_namespace=\"website-prod\",ingress=\"website\"}) and on() absent(nginx_ingress_controller_requests{namespace=\"website-prod\",exported_namespace=\"\",ingress=\"website\"})))",
+          "for": "15m",
+          "labels": {
+            "tenant": "website",
+            "env": "prod",
+            "namespace": "website-prod",
+            "slo": "availability",
+            "severity": "warning"
+          },
+          "annotations": {
+            "summary": "website-prod: AvailabilityTelemetryMissing",
+            "description": "Ingress request counters are missing or stale; availability is unobserved, not healthy. Check ingress existence, scrape discovery, release labels and exported_namespace/namespace selectors.",
+            "runbook_url": "https://github.com/leemarkus/k8s-golden-path/blob/main/docs/runbooks/telemetry-missing.md",
+            "activation": "ENABLED: repository runbook body published by the runbook stage; 15m startup grace. Live activation verifies live discovery/routing."
+          }
+        },
+        {
+          "alert": "GoldenPathLatencyTelemetryMissing",
+          "expr": "(sum(absent(nginx_ingress_controller_request_duration_seconds_count{exported_namespace=\"website-prod\",ingress=\"website\"}) and on() absent(nginx_ingress_controller_request_duration_seconds_count{namespace=\"website-prod\",exported_namespace=\"\",ingress=\"website\"})) or sum(absent(nginx_ingress_controller_request_duration_seconds_bucket{exported_namespace=\"website-prod\",ingress=\"website\",le=\"0.5\"}) and on() absent(nginx_ingress_controller_request_duration_seconds_bucket{namespace=\"website-prod\",exported_namespace=\"\",ingress=\"website\",le=\"0.5\"})))",
+          "for": "15m",
+          "labels": {
+            "tenant": "website",
+            "env": "prod",
+            "namespace": "website-prod",
+            "slo": "latency",
+            "severity": "warning"
+          },
+          "annotations": {
+            "summary": "website-prod: LatencyTelemetryMissing",
+            "description": "The latency count or required 0.5s bucket is missing or stale. Latency is unobserved; verify histogram configuration and scraping before activation.",
+            "runbook_url": "https://github.com/leemarkus/k8s-golden-path/blob/main/docs/runbooks/telemetry-missing.md",
+            "activation": "ENABLED: repository runbook body published by the runbook stage; 15m startup grace. Live activation verifies live discovery/routing."
+          }
+        },
+        {
+          "alert": "GoldenPathNoTraffic",
+          "expr": "(sum(rate(nginx_ingress_controller_requests{exported_namespace=\"website-prod\",ingress=\"website\"}[5m]) or rate(nginx_ingress_controller_requests{namespace=\"website-prod\",exported_namespace=\"\",ingress=\"website\"}[5m])) == 0)",
+          "for": "15m",
+          "labels": {
+            "tenant": "website",
+            "env": "prod",
+            "namespace": "website-prod",
+            "slo": "availability",
+            "severity": "warning"
+          },
+          "annotations": {
+            "summary": "website-prod: NoTraffic",
+            "description": "Counters exist but no requests were observed in the trailing 5m for at least 15m. This is no observation, not perfect availability or a measured outage. Check expected traffic and ingress routing.",
+            "runbook_url": "https://github.com/leemarkus/k8s-golden-path/blob/main/docs/runbooks/telemetry-missing.md",
+            "activation": "ENABLED: repository runbook body published by the runbook stage; 15m startup grace. Live activation verifies live discovery/routing."
+          }
+        }
+      ]
+    },
+    {
+      "name": "website-prod-latency-staged",
+      "interval": "30s",
+      "rules": [
+        {
+          "alert": "GoldenPathLatencyFastBurn",
+          "expr": "(((gp:slo_error_ratio:rate5m{tenant=\"website\",env=\"prod\",slo=\"latency\"} / (1 - 0.99) > 14.4) and (gp:slo_error_ratio:rate1h{tenant=\"website\",env=\"prod\",slo=\"latency\"} / (1 - 0.99) > 14.4)) or ((gp:slo_error_ratio:rate30m{tenant=\"website\",env=\"prod\",slo=\"latency\"} / (1 - 0.99) > 6) and (gp:slo_error_ratio:rate6h{tenant=\"website\",env=\"prod\",slo=\"latency\"} / (1 - 0.99) > 6))) and on() (vector(0) == 1)",
+          "for": "2m",
+          "labels": {
+            "tenant": "website",
+            "env": "prod",
+            "namespace": "website-prod",
+            "slo": "latency",
+            "severity": "critical"
+          },
+          "annotations": {
+            "summary": "website-prod latency error budget fast burn",
+            "description": "Measured fraction slower than 0.5s exceeds paired 14.4x (5m AND 1h) OR 6x (30m AND 6h) burn thresholds against the nominal 30-day objective 0.99. Critical routes to page. Low volume is a prior, not a fitted target; absent or zero traffic is not success. Check telemetry diagnostics.",
+            "runbook_url": "https://github.com/leemarkus/k8s-golden-path/blob/main/docs/runbooks/slo-burn.md",
+            "activation": "DISABLED AND EXCLUDED: Before activation, require real user traffic, measured latency distribution, verified histogram bucket and reviewed objective (ADR-0011)."
+          }
+        },
+        {
+          "alert": "GoldenPathLatencySlowBurn",
+          "expr": "(((gp:slo_error_ratio:rate2h{tenant=\"website\",env=\"prod\",slo=\"latency\"} / (1 - 0.99) > 3) and (gp:slo_error_ratio:rate1d{tenant=\"website\",env=\"prod\",slo=\"latency\"} / (1 - 0.99) > 3)) or ((gp:slo_error_ratio:rate6h{tenant=\"website\",env=\"prod\",slo=\"latency\"} / (1 - 0.99) > 1) and (gp:slo_error_ratio:rate3d{tenant=\"website\",env=\"prod\",slo=\"latency\"} / (1 - 0.99) > 1))) and on() (vector(0) == 1)",
+          "for": "15m",
+          "labels": {
+            "tenant": "website",
+            "env": "prod",
+            "namespace": "website-prod",
+            "slo": "latency",
+            "severity": "warning"
+          },
+          "annotations": {
+            "summary": "website-prod latency error budget slow burn",
+            "description": "Measured fraction slower than 0.5s exceeds paired 3x (2h AND 1d) OR 1x (6h AND 3d) burn thresholds against the nominal 30-day objective 0.99. Warning appears on the hourly status board. Low volume is a prior, not a fitted target; absent or zero traffic is not success. Check telemetry diagnostics.",
+            "runbook_url": "https://github.com/leemarkus/k8s-golden-path/blob/main/docs/runbooks/slo-burn.md",
+            "activation": "DISABLED AND EXCLUDED: Before activation, require real user traffic, measured latency distribution, verified histogram bucket and reviewed objective (ADR-0011)."
+          }
+        }
+      ]
+    }
+  ]
+}

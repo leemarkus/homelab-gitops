@@ -1,0 +1,28 @@
+defaultSettings:
+  defaultDataPath: /var/lib/longhorn
+  defaultReplicaCount: 3
+  replicaZoneSoftAntiAffinity: false
+  replicaSoftAntiAffinity: false
+  createDefaultDiskLabeledNodes: false
+  nodeDrainPolicy: block-for-eviction-if-contains-last-replica
+  detachManuallyAttachedVolumesWhenCordoned: true
+  allowRecurringJobWhileVolumeDetached: true
+
+  storageMinimalAvailablePercentage: 25
+
+defaultBackupStore:
+  backupTarget: s3://cluster-backups@us-east-1/longhorn
+  backupTargetCredentialSecret: minio-credentials
+
+persistence:
+  defaultClass: true
+  defaultClassReplicaCount: 3
+
+longhornUI:
+  replicas: 1
+
+metrics:
+  serviceMonitor:
+    enabled: true
+    additionalLabels:
+      release: kube-prometheus-stack

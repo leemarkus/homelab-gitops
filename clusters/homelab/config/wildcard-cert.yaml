@@ -1,0 +1,14 @@
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: wildcard-apps
+  namespace: ingress-nginx
+spec:
+  secretName: wildcard-apps-tls
+  issuerRef:
+    name: letsencrypt-dns
+    kind: ClusterIssuer
+  dnsNames:
+    - "*.apps.example.com"
+    - "apps.example.com"
+    - "*.k8s.apps.example.com"

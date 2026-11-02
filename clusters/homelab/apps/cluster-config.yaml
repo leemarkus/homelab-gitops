@@ -1,0 +1,26 @@
+# Plain manifests under config/: policies, quotas, PriorityClasses, alerts.
+# Sync wave -1 so PriorityClasses and namespaces exist before chart-backed
+# apps start pods that reference them.
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: cluster-config
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "-1"
+spec:
+  project: platform
+  source:
+    repoURL: https://git.example.com/platform/gitops.git
+    targetRevision: deploy
+    path: clusters/homelab/config
+    directory:
+      recurse: true
+  destination:
+    server: https://kubernetes.default.svc
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - ServerSideApply=true

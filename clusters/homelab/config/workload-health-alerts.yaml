@@ -1,0 +1,50 @@
+---
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: workload-health
+  namespace: monitoring
+  labels:
+    release: kube-prometheus-stack
+    app.kubernetes.io/name: workload-health
+spec:
+  groups:
+    - name: workload.crashloop
+      rules:
+        - alert: PodInitContainerCrashLooping
+          expr: max by (namespace, pod, container) (kube_pod_init_container_status_waiting_reason{reason="CrashLoopBackOff"}) > 0
+          for: 15m
+          labels:
+            severity: warning
+          annotations:
+            summary: "init container {{ $labels.container }} crashlooping in {{ $labels.namespace }}/{{ $labels.pod }}"
+            description: >-
+              An init container has been in CrashLoopBackOff for 15m+, so the pod
+              has never started its main container. ArgoCD will report the
+              Application as Progressing and Synced throughout — it is neither
+              Degraded nor OutOfSync — so this rule is the only thing that
+              notices. Check `kubectl -n {{ $labels.namespace }} logs {{ $labels.pod }}
+              -c {{ $labels.container }}`; an init container that talks to
+              external storage is usually a credential or endpoint problem, not a
+              manifest problem.
+        - alert: PodContainerCrashLooping
+          expr: max by (namespace, pod, container) (kube_pod_container_status_waiting_reason{reason="CrashLoopBackOff"}) > 0
+          for: 15m
+          labels:
+            severity: warning
+          annotations:
+            summary: "container {{ $labels.container }} crashlooping in {{ $labels.namespace }}/{{ $labels.pod }}"
+            description: >-
+              A container has been in CrashLoopBackOff for 15m+. Same blind spot
+              as the init-container rule above where ArgoCD is concerned.
+        - alert: PodImagePullFailing
+          expr: max by (namespace, pod, container) (kube_pod_container_status_waiting_reason{reason=~"ImagePullBackOff|ErrImagePull"}) > 0
+          for: 15m
+          labels:
+            severity: warning
+          annotations:
+            summary: "cannot pull image for {{ $labels.container }} in {{ $labels.namespace }}/{{ $labels.pod }}"
+            description: >-
+              Image pull has been failing for 15m+. For images on
+              git.example.com this is usually the pull secret or the node
+              hosts entry for the registry, not the tag.
