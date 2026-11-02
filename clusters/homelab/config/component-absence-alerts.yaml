@@ -115,10 +115,13 @@ spec:
               own webhooks (policy, exception, cleanup, global-context) are
               failurePolicy=Fail, so applying a Policy or PolicyException while
               this is down is rejected.
-              Warning rather than critical: every change that reaches `deploy`
-              has already passed the same policies in CI, so the gap is limited
-              to resources applied outside Git. Raise it to critical if that
-              stops being true.
+              Warning rather than critical: CI runs the same policies against
+              the raw manifests and the rendered Kustomize overlays before
+              `deploy` advances, so authored application workloads are checked
+              before they reach the cluster. Helm-rendered chart output and
+              anything applied outside Git are not, and those are what this
+              window exposes. Raise it to critical if that exposure stops being
+              acceptable.
 
         - alert: AlloyDown
           expr: |
